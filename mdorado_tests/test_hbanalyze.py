@@ -4,34 +4,19 @@ import unittest
 import os
 import numpy as np
 import MDAnalysis
-from mdorado.gofr import Gofr
-from mdorado.data.datafilenames import (water_topology, 
-                                        water_trajectory,
-                                        test_gofr_ss,
-                                        test_gofr_cc,
-                                        test_gofr_sc
-                                            )
+from mdorado.hb_analyze import hb_analyze
+from mdorado.data.datafilenames import water_topology, water_trajectory, test_hbanalyze
 
 class TestProgram(unittest.TestCase):
     def test_gofr(self):
         u = MDAnalysis.Universe(water_topology, water_trajectory)
-        hgrp = u.select_atoms("name hw")
-        ogrp = u.select_atoms("name ow")
-        watergrp = u.select_atoms("resname SOL")
-        sitesite = Gofr(universe=u, agrp=hgrp, bgrp=ogrp, rmin=1.0, rmax=6, bins=100, mode="site-site", outfilename="test.dat")
-        cmscms = Gofr(universe=u, agrp=watergrp, bgrp=watergrp, rmin=1.0, rmax=6, bins=100, mode="cms-cms", outfilename="test.dat")
-        sitecms = Gofr(universe=u, agrp=hgrp, bgrp=watergrp, rmin=1.0, rmax=6, bins=100, mode="site-cms", outfilename="test.dat")
-        
-        gss = np.loadtxt(test_gofr_ss, unpack=True)
-        gcc = np.loadtxt(test_gofr_cc, unpack=True)
-        gsc = np.loadtxt(test_gofr_sc, unpack=True)
+        xgrp = u.select_atoms("name ow")
+        hgrp = u.select_atoms("name hw")[::2]
+        hb_analyze(universe=u, xgrp=xgrp, hgrp=hgrp, rmin=1.5, rmax=5, cosalphamin=-1, cosalphamax=1, bins=50, outfilename="test.dat")
+        matrix = np.loadtxt("test.dat")
 
-        resss = np.array([sitesite.rdat, sitesite.hist, sitesite.annn, sitesite.bnnn])
-        rescc = np.array([cmscms.rdat, cmscms.hist, cmscms.annn, cmscms.bnnn])
-        ressc = np.array([sitecms.rdat, sitecms.hist, sitecms.annn, sitecms.bnnn])
-        self.assertIsNone(np.testing.assert_array_almost_equal(resss, gss))
-        self.assertIsNone(np.testing.assert_array_almost_equal(rescc, gcc))
-        self.assertIsNone(np.testing.assert_array_almost_equal(ressc, gsc))
+        test_matrix = np.loadtxt(test_hbanalyze)
+        self.assertIsNone(np.testing.assert_array_almost_equal(matrix, test_matrix))
         os.remove("test.dat")
 
 if __name__ == '__main__':
