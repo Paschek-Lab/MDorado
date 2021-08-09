@@ -8,7 +8,7 @@ from mdorado.hb_analyze import hb_analyze
 from mdorado.data.datafilenames import water_topology, water_trajectory, test_hbanalyze
 
 class TestProgram(unittest.TestCase):
-    def test_gofr(self):
+    def test_hbanalyze(self):
         u = MDAnalysis.Universe(water_topology, water_trajectory)
         xgrp = u.select_atoms("name ow")
         hgrp = u.select_atoms("name hw")[::2]
