@@ -14,6 +14,6 @@ setup(
             'MDAnalysis==1.1.1',
             ],
         package_data={
-            "mdorado": ["data/*"],
+            "mdorado": ["data/*", "data/.water*"],
             },
 )
