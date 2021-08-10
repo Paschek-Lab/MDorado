@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
 	name='mdorado',
 	packages=find_packages(include=['mdorado']),
-	version='0.1.1',
+	version='0.1.2',
 	python_requires='>=3',
 	description='Collection of scripts to analyse molecular dynamics simulations.',
 	author='Jan Neumann',
@@ -14,6 +14,6 @@ setup(
             'MDAnalysis==1.1.1',
             ],
         package_data={
-            "mdorado": ["data/*"],
+            "mdorado": ["data/*", "data/.water*"],
             },
 )
