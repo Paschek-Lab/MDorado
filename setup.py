@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
 	name='mdorado',
 	packages=find_packages(include=['mdorado']),
-	version='0.1.2',
+	version='0.1.4',
 	python_requires='>=3',
 	description='Collection of scripts to analyse molecular dynamics simulations.',
 	author='Jan Neumann',
