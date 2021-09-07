@@ -200,7 +200,7 @@ class Gofr:
         self.avvol = self.avvol / self.ulen
         #number density of A and B to calculate annn and bnnn
         arhohist = (self.na / self.avvol) * self.hist
-        brhohist = (self.na / self.avvol) * self.hist
+        brhohist = (self.nb / self.avvol) * self.hist
         self.annn = np.cumsum(arhohist)
         self.bnnn = np.cumsum(brhohist)
         for i in np.arange(len(self.hist)):
