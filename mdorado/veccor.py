@@ -2,6 +2,38 @@ import numpy as np
 from mdorado.correlations import correlate
 from scipy.special import eval_legendre
 
+def get_vec(universe, agrp, bgrp):
+    #checking user input
+    try:
+        universe.trajectory
+    except AttributeError:
+        raise AttributeError("universe has no attribute 'trajectory'")
+
+    try:
+        agrp.positions
+    except AttributeError:
+        raise AttributeError("agrp has no attribute 'positions'")
+
+    try:
+        bgrp.positions
+    except AttributeError:
+        raise AttributeError("bgrp has no attribute 'positions'")
+
+    ulen = len(universe.trajectory)
+    na = len(agrp)
+    vecarray = np.zeros((ulen, na, 3))
+    step = 0
+    #compute vector for every timestep
+    for ts in universe.trajectory:
+        vecarray[step] = bgrp.positions - agrp.positions       #na = nb !
+        step+=1
+    #normalize vector
+    norm = np.sqrt((vecarray*vecarray).sum(axis=-1))
+    vecarray /= norm[:,:,np.newaxis]
+    #reorder array for easier correlation
+    vecarray = np.swapaxes(vecarray,0,1)
+    return vecarray
+
 def get_normal_vec(universe, agrp, bgrp, cgrp):
     #checking user input
     try:
@@ -41,37 +73,27 @@ def get_normal_vec(universe, agrp, bgrp, cgrp):
     normvecarray = np.swapaxes(normvecarray,0,1)
     return normvecarray
 
-def get_vec(universe, agrp, bgrp):  
-    #checking user input
-    try:
-        universe.trajectory
-    except AttributeError:
-        raise AttributeError("universe has no attribute 'trajectory'")
-
-    try: 
-        agrp.positions
-    except AttributeError:
-        raise AttributeError("agrp has no attribute 'positions'")
-
-    try: 
-        bgrp.positions
-    except AttributeError:
-        raise AttributeError("bgrp has no attribute 'positions'")
-
-    ulen = len(universe.trajectory)
-    na = len(agrp)
-    vecarray = np.zeros((ulen, na, 3))
-    step = 0
-    #compute vector for every timestep
-    for ts in universe.trajectory:
-        vecarray[step] = bgrp.positions - agrp.positions       #na = nb !
-        step+=1
-    #normalize vector
-    norm = np.sqrt((vecarray*vecarray).sum(axis=-1))
-    vecarray /= norm[:,:,np.newaxis]
-    #reorder array for easier correlation
-    vecarray = np.swapaxes(vecarray,0,1)
-    return vecarray
+def correlvec(vecarray, refvec, dt, nlegendre, outfilename=False, normed=True):
+    na, ulen, ndim = vecarray.shape
+    refvec = np.array(refvec)
+    #normalize refvec
+    norm = np.linalg.norm(refvec)
+    refvec = refvec / norm
+    allcorrel = np.zeros(ulen)
+    #compute legendre polynomial and correlate vector-wise
+    for mol in vecarray:
+        legendre_poly = eval_legendre(nlegendre, np.inner(refvec, mol))
+        allcorrel += correlate(legendre_poly)
+    allcorrel = allcorrel / na
+    #normalize correlation if necessary
+    if normed == True:
+        allcorrel /= allcorrel[0]
+    timesteps = np.arange(ulen)*dt
+    #save in textfile
+    if outfilename:
+        filename=str(outfilename)
+        np.savetxt(filename, np.array([timesteps, allcorrel]).T, fmt='%.10G')
+    return timesteps, allcorrel 
 
 def isocorrelvec(vecarray, dt, nlegendre, outfilename=False):
     na, ulen, ndim = vecarray.shape
@@ -133,28 +155,6 @@ def isocorrelveclg2(vecarray, dt, outfilename=False):
         allcorrel += ( xsq + ysq + zsq + 2*xy + 2*xz + 2*yz )
     #apply second legendre polynomial and divide by number of vectors
     allcorrel =  1.5 * allcorrel / na - 0.5
-    timesteps = np.arange(ulen)*dt
-    #save in textfile
-    if outfilename:
-        filename=str(outfilename)
-        np.savetxt(filename, np.array([timesteps, allcorrel]).T, fmt='%.10G')
-    return timesteps, allcorrel 
-
-def correlvec(vecarray, refvec, dt, nlegendre, outfilename=False, normed=True):
-    na, ulen, ndim = vecarray.shape
-    refvec = np.array(refvec)
-    #normalize refvec
-    norm = np.linalg.norm(refvec)
-    refvec = refvec / norm
-    allcorrel = np.zeros(ulen)
-    #compute legendre polynomial and correlate vector-wise
-    for mol in vecarray:
-        legendre_poly = eval_legendre(nlegendre, np.inner(refvec, mol))
-        allcorrel += correlate(legendre_poly)
-    allcorrel = allcorrel / na
-    #normalize correlation if necessary
-    if normed == True:
-        allcorrel /= allcorrel[0]
     timesteps = np.arange(ulen)*dt
     #save in textfile
     if outfilename:
