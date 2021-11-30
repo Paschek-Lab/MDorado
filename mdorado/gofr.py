@@ -4,7 +4,7 @@ from MDAnalysis.analysis.distances import capped_distance
 
 class Gofr:
     """
-    alexandria.gofr.Gofr(universe, agrp, bgrp, rmax, rmin=0, bins=100,
+    mdorado.gofr.Gofr(universe, agrp, bgrp, rmax, rmin=0, bins=100,
         mode="site-site", outfilename="gofr.dat")
 
     Computes the average radial distribution function g(r). Between the
