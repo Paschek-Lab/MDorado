@@ -3,7 +3,7 @@ from scipy import signal
 
 def correlate(a, b=None):
     """
-    correlate(a,b=None)
+    mdorado.correlations.correlate(a,b=None)
 
     Calculates the correlation function <a(0)b(t)> from two arrays or
     the autocorrelation function <a(0)a(t)> if just one argument is
