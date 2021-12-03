@@ -11,7 +11,7 @@ setup(
         install_requires=[
             'numpy>=1.20.0',
             'scipy>=1.4.0',
-            'MDAnalysis==1.1.1',
+            'MDAnalysis>=1.1.1',
             ],
         package_data={
             "mdorado": ["data/*", "data/.water*"],
