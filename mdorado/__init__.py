@@ -8,5 +8,6 @@ __modulelist__ = [
             "gofr",
             "hb_analyze", 
             "lifetime",
-            "msd"
+            "msd",
+            "veccor"
             ]
