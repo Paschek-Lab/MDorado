@@ -216,12 +216,12 @@ def correlvec(vecarray, refvec, dt, nlegendre, outfilename=False, normed=True):
             compute the respective reorientational correlation function
             R_i(t).
 
-        outfilename: str
+        outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
             containing t and R_i(t) will be written. If False (default),
             no file will be written. 
             
-        normed: boolean
+        normed: boolean, optional
             Specifies whether the function R_i(t) should be normalized
             or no. Default is True.
 
@@ -283,7 +283,7 @@ def isocorrelvec(vecarray, dt, nlegendre, outfilename=False):
             compute the respective reorientational correlation function
             R_i(t).
 
-        outfilename: str
+        outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
             containing t and R_i(t) will be written. If False (default),
             no file will be written.
@@ -339,7 +339,7 @@ def isocorrelveclg1(vecarray, dt, outfilename=False):
         dt: int or float
             Timestep used in vecarray.
 
-        outfilename: str
+        outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
             containing t and R_1(t) will be written. If False (default),
             no file will be written.
@@ -398,7 +398,7 @@ def isocorrelveclg2(vecarray, dt, outfilename=False):
         dt: int or float
             Timestep used in vecarray.
 
-        outfilename: str
+        outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
             containing t and R_2(t) will be written. If False (default),
             no file will be written.

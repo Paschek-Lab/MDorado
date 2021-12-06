@@ -2,7 +2,77 @@ import numpy as np
 from scipy import signal
 from mdorado.correlations import correlate
 
+"""
+mdorado.msd
+
+Functions to help compute the mean square displacement.
+
+Functions:
+----------
+    
+    mdorado.msd.unwrap(universe, agrp, dimensionskey="xyz", cms=False)
+        Unwraps the trajectory of an AtomGroup agrp (or its 
+        center-of-mass) and creates an array of shape N_a (number of 
+        atoms in agrp or number of cms), N_dim (number of dimensions),
+        N_ts (number of timesteps), which can be used as an input to
+        the msd function. Only works for boxes, where all angles are
+        90°.
+
+    mdorado.msd.msd(positions, dt, outfilename="msd.dat")
+        Computes the mean-square-displacement for an array of particle
+        positions of shape N_a, N_dim, N_ts (see unwrap function). 
+"""
+
 def unwrap(universe, agrp, dimensionskey="xyz", cms=False):
+    """
+    mdorado.msd.unwrap(universe, agrp, dimensionskey="xyz", cms=False)
+
+    Unwraps the trajectory of an AtomGroup agrp (or its
+    center-of-mass) and creates an array of shape N_a (number of
+    atoms in agrp or number of cms), N_dim (number of dimensions),
+    N_ts (number of timesteps), which can be used as an input to
+    the msd function. Only works for boxes, where all angles are
+    90°.
+
+    Parameters
+    ----------
+        vecarray: MDAnalysis.Universe
+            Universe containing the trajectory
+
+        agrp: AtomGroup from MDAnalysis
+            AtomGroup containing all atoms for which the trajectory
+            should be unwrapped.
+
+        dimensionskey: str, optional
+            Dimension in which the trajectory is unwrapped. The
+            keywords are:
+                "xyz" for all dimensions
+                "x", "y" or "z" for one of the three principle box axes
+                "xy", "xz" or "yz" for a combination of two of the
+                    three box axes.
+        
+        cms: bool, optional
+            If cms=True the program computes the movement of the 
+            center-of-mass of atoms belonging to the same molecule in
+            agrp. If, for example, agrp would contain all atoms of
+            water molecules in the simulation this option allows for 
+            the calculation of the average center-of-mass MSD of these
+            water molecules. If for the same case cms=False is chosen, 
+            the program calculates the MSD of all the various atoms
+            individually, averaging over hydrogen as well as oxygen
+            atoms. The default value is False.
+
+    Returns
+    -------
+        ndarray
+            An ndarray containing the unwrapped positions. The shape of
+            the array is N_a, N_dim, N_steps, where N_a denotes the 
+            number of atoms in agrp (or the number of molecules if 
+            cms=True), N_dim denotes the number of dimensions according
+            to the option dimensionskey, and N_steps is the number of
+            timesteps in the universe.
+    """
+
     #create dictionary and match the dimensionskey
     dimensionsdict = { "xyz": [0,1,2],
                       "x": [0],
@@ -58,6 +128,37 @@ def unwrap(universe, agrp, dimensionskey="xyz", cms=False):
     return positions
 
 def msd(positions, dt, outfilename="msd.dat"):
+    """
+    mdorado.msd.msd(positions, dt, outfilename="msd.dat")
+
+    Computes the mean-square-displacement for an array of particle 
+    positions of shape N_a, N_dim, N_ts (see unwrap function) via
+        MSD(t) = < | r(t) - r(0) |**2 >
+    where r(t) denotes a positional vector of the unwrapped trajectory.
+    Uses a Fast-Fourier-transform algorithm for long trajectories.
+
+
+    Parameters
+    ----------
+        positions: ndarray
+            Array of shape N_a, N_dim, N_steps containing an unwrapped 
+            trajectory, where N_a denotes the number of particles, N_dim
+            denotes the number of dimensions, and N_steps denotes the 
+            number of steps (see mdorado.msd.unwrap).
+
+        dt: int or float
+            Difference in time between two configurations in the 
+            positions option.
+
+        outfilename: str, optional
+            Name of the outputfile. Default is msd.dat.
+
+    Output
+    ------
+        Write a file containing two columns, where the first column is
+        the time delay t and the second column contains the average
+        MSD(t).
+    """
     #initialize atom number, number of dimensons and trajectory length
     na, ndim, ulen = positions.shape
     #initialize empty array to collect average MSD and factor for normalization
