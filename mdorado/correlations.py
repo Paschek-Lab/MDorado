@@ -3,7 +3,7 @@ from scipy import signal
 
 def correlate(a, b=None):
     """
-    correlate(a,b=None)
+    mdorado.correlations.correlate(a,b=None)
 
     Calculates the correlation function <a(0)b(t)> from two arrays or
     the autocorrelation function <a(0)a(t)> if just one argument is
@@ -34,13 +34,13 @@ def correlate(a, b=None):
         raise TypeError("""
             correlate: a and b have to be one-dimensional arrays or lists.
             """)
-
+    
     ct = signal.correlate(b, a, method='auto', mode='full')
     #remove values for t<0
     ct = ct[ct.size // 2:]
     ct = ct.astype(float)
     ctsize = ct.size
+    alen = len(a)
     #normalize ct based on number of points for correlation 
-    for i in np.arange(ct.size):
-        ct[i] = ct[i] / (ct.size-i)
+    ct /= np.flip(np.arange(1, alen+1))
     return ct

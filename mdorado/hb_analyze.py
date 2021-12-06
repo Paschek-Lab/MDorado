@@ -5,7 +5,7 @@ from MDAnalysis.lib.distances import calc_angles
 
 def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, cosalphamax=1, bins=50, outfilename="hb_analyze.dat", ralphalist=False):
     """
-    alexandria.hb_analyze.hb_analyze(universe, xgrp, hgrp, rmax, 
+    mdorado.hb_analyze.hb_analyze(universe, xgrp, hgrp, rmax, 
         ygrp=None, rmin=0, bins=50, outfilename="hb_analyze.dat",
         ralphalist=False)
 
