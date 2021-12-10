@@ -8,7 +8,7 @@ from mdorado.data.datafilenames import water_topology, water_trajectory, test_li
 
 class TestProgram(unittest.TestCase):
     def test_lifetime(self):
-        u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_resid_from_one=False)
+        u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_resid_from_one=True)
         ygrp = u.select_atoms("name ow")
         xgrp = u.select_atoms("name ow and resid 15")
         hgrp = u.select_atoms("name hw and resid 15")[:1:]

@@ -11,7 +11,7 @@ ax.plot(r,gofr, color='firebrick', label="H$\cdots$O")
 ax.plot(r,gofrcms, color='royalblue', label="cms$\cdots$cms")
 ax.plot(r,gofracms, color='orange', label="H$\cdots$cms")
 
-ax.set_xlim(1,6)
+ax.set_xlim(1.0,6)
 ax.set_ylim(0,4)
 ax.xaxis.set_minor_locator(MultipleLocator(0.25))
 ax.yaxis.set_minor_locator(MultipleLocator(0.25))

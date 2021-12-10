@@ -16,7 +16,7 @@ class TestProgram(unittest.TestCase):
         u = MDAnalysis.Universe(water_topology, water_trajectory)
         hgrp = u.select_atoms("name hw")
         ogrp = u.select_atoms("name ow")
-        watergrp = u.select_atoms("resname SOL")
+        watergrp = u.select_atoms("resname sol")
         with tempfile.TemporaryDirectory() as tmpdirname:
             os.chdir(tmpdirname)
             sitesite = Gofr(universe=u, agrp=hgrp, bgrp=ogrp, rmin=1.0, rmax=6, bins=100, mode="site-site", outfilename="gofr_ss.dat")
