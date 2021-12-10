@@ -127,7 +127,7 @@ def unwrap(universe, agrp, dimensionskey="xyz", cms=False):
     positions = np.moveaxis(positions,0,-1)
     return positions
 
-def msd(positions, dt, outfilename="msd.dat"):
+def msd(positions, dt, outfilename=False):
     """
     mdorado.msd.msd(positions, dt, outfilename="msd.dat")
 
@@ -151,13 +151,16 @@ def msd(positions, dt, outfilename="msd.dat"):
             positions option.
 
         outfilename: str, optional
-            Name of the outputfile. Default is msd.dat.
+            If specified an xy-file with the name str(outfilename)
+            containing t and MSD(t) will be written. If False (default),
+            no file will be written.
 
-    Output
-    ------
-        Write a file containing two columns, where the first column is
-        the time delay t and the second column contains the average
-        MSD(t).
+    Returns
+    -------
+        timesteps, msd: ndarray, ndarray
+            Returns two arrays, the first containing information about
+            the timestep t and the second containing the averaged
+            mean-square-displacement MSD(t)
     """
     #initialize atom number, number of dimensons and trajectory length
     na, ndim, ulen = positions.shape
@@ -175,4 +178,8 @@ def msd(positions, dt, outfilename="msd.dat"):
             msd[1:] += sm*factor[1:] - twocorrel[1:]
     #normalize MSD to number of particles
     msd = msd / na
-    np.savetxt(outfilename, np.array([np.arange(ulen)*dt, msd]).T, fmt='%.10G')
+    timesteps = np.arange(ulen)*dt
+    if outfilename:
+        filename=str(outfilename)
+        np.savetxt(filename, np.array([timesteps, msd]).T, fmt='%.10G')
+    return timesteps, msd

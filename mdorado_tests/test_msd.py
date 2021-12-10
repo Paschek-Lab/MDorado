@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 import os
 import numpy as np
 import MDAnalysis
@@ -12,21 +11,18 @@ from mdorado.data.datafilenames import (water_topology,
 
 class TestProgram(unittest.TestCase):
     def test_unwrap(self):
-        u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_resid_from_one=False)
-        mol42grp = u.select_atoms("resname SOL and resid 42")
+        u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_from_one=True)
+        mol42grp = u.select_atoms("resid 42")
         mol42pos = msd.unwrap(universe=u, agrp=mol42grp, dimensionskey="xyz", cms=True)
         refunwrap = np.load(test_unwrap)
         self.assertIsNone(np.testing.assert_array_almost_equal(refunwrap, mol42pos))
     def test_msd(self):
-        u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_resid_from_one=False)
+        u = MDAnalysis.Universe(water_topology, water_trajectory)
         hgrp = u.select_atoms("name hw")
         hpos = msd.unwrap(universe=u, agrp=hgrp, dimensionskey="xyz", cms=False)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            os.chdir(tmpdirname)
-            msd.msd(positions=hpos, dt=0.2, outfilename="msd_h.dat") 
-            hmsd = np.loadtxt("msd_h.dat")
-            refmsd = np.loadtxt(test_msd)
-            self.assertIsNone(np.testing.assert_array_almost_equal(refmsd, hmsd))
+        hmsd = msd.msd(positions=hpos, dt=0.2) 
+        refmsd = np.loadtxt(test_msd)
+        self.assertIsNone(np.testing.assert_array_almost_equal(refmsd, hmsd))
 
 if __name__ == '__main__':
         unittest.main()
