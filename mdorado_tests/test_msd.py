@@ -12,7 +12,7 @@ from mdorado.data.datafilenames import (water_topology,
 class TestProgram(unittest.TestCase):
     def test_unwrap(self):
         u = MDAnalysis.Universe(water_topology, water_trajectory, tpr_from_one=True)
-        mol42grp = u.select_atoms("resid 42")
+        mol42grp = u.select_atoms("index 123 124 125")
         mol42pos = msd.unwrap(universe=u, agrp=mol42grp, dimensionskey="xyz", cms=True)
         refunwrap = np.load(test_unwrap)
         self.assertIsNone(np.testing.assert_array_almost_equal(refunwrap, mol42pos))
