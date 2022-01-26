@@ -1,11 +1,10 @@
 import unittest
 import numpy as np
 import MDAnalysis
+from mdorado import vectors as mvec
 from mdorado import veccor
 from mdorado.data.datafilenames import (water_topology, 
                                         water_trajectory,
-                                        test_getvec,
-                                        test_getnvec,
                                         test_correlvec,
                                         test_vectors,
                                         test_isocorrelvec,
@@ -14,16 +13,6 @@ from mdorado.data.datafilenames import (water_topology,
                                             )
 
 class TestProgram(unittest.TestCase):
-    def test_getvec(self):
-        refvectors = np.loadtxt(test_getvec)
-        self.assertIsNone(np.testing.assert_array_almost_equal(refvectors, vectors[42]))
-
-    def test_getnvec(self):
-        h2grp = u.select_atoms("name hw")[1::2]
-        refvectors = np.loadtxt(test_getnvec)
-        normalvectors = veccor.get_normal_vec(universe=u, agrp=ogrp, bgrp=hgrp, cgrp=h2grp)
-        self.assertIsNone(np.testing.assert_array_almost_equal(refvectors, normalvectors[42]))
-
     def test_correlvec(self):
         ts, correl = veccor.correlvec(vectors, refvec=[1,1,1], nlegendre=2, dt=dt)
         refcorrel = np.loadtxt(test_correlvec)
@@ -51,6 +40,6 @@ if __name__ == '__main__':
         ogrp = u.select_atoms("name ow")
         hgrp = u.select_atoms("name hw")[::2]
         dt=0.2
-        vectors = veccor.get_vec(universe=u, agrp=ogrp, bgrp=hgrp)
+        vectors = mvec.norm_vecarray(mvec.get_vecarray(universe=u, agrp=ogrp, bgrp=hgrp))[0]
         unittest.main()
 

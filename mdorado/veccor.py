@@ -1,7 +1,3 @@
-import numpy as np
-from mdorado.correlations import correlate
-from scipy.special import eval_legendre
-
 """
 mdorado.veccor
 
@@ -13,14 +9,6 @@ axis.
 
 Functions
 ---------
-    mdorado.veccor.get_vec(universe, agrp, bgrp)
-        Computes array of vectors for input to correlvec and 
-        isocorrelvec.
-
-    mdorado.veccor.get_normal_vec(universe, agrp, bgrp, cgrp)
-        Computes array of normal vectors for input to correlvec and
-        isocorrelvec.
-
     mdorado.veccor.correlvec(vecarray, refvec, dt, nlegendre, 
         outfilename=False, normed=True):
         Computes R_i(t) in the anisotropic case using a fixed external
@@ -38,150 +26,9 @@ Functions
         Fast algorithm to compute R_2(t) in the isotropic case.
 """
 
-def get_vec(universe, agrp, bgrp):
-    """
-    mdorado.veccor.get_vec(universe, agrp, bgrp)
-
-    Computes given to AtomGroups agrp and bgrp, it computes the time 
-    evolution of every vector bgrp[i]-agrp[i] for the whole trajectory.
-    The resulting array can be used as an input for the correlvec or 
-    isocorrelvec functions to compute a reorientational correlation 
-    function R_i(t). Does not account for periodic boundary conditions,
-    so only intramolecular vectors should be considered with 'repaired'
-    trajectories, where molecules are not broken between two opposite
-    sites of the box.
-
-    Parameters
-    ----------
-        universe: MD.Analysis.Universe
-            The universe containing the trajectory.
-
-        agrp: AtomGroup from MDAnalysis
-            AtomGroup containing all atoms A.
-
-        bgrp: AtomGroup from MDAnalysis
-            AtomGroup containing all atoms B.
-
-    Returns
-    -------
-        ndarray
-            Array containing the trajectory of every vector 
-            bgrp[i]-agrp[i] of the shape N_vec (number of vectors), 
-            N_ts (number of timesteps in the universe), N_dim (number
-            of dimensions). The vectors are normalized before output. 
-            Can be used as input for the correlvec and isocorrelvec 
-            functions.
-    """
-    #checking user input
-    try:
-        universe.trajectory
-    except AttributeError:
-        raise AttributeError("universe has no attribute 'trajectory'")
-
-    try:
-        agrp.positions
-    except AttributeError:
-        raise AttributeError("agrp has no attribute 'positions'")
-
-    try:
-        bgrp.positions
-    except AttributeError:
-        raise AttributeError("bgrp has no attribute 'positions'")
-
-    ulen = len(universe.trajectory)
-    na = len(agrp)
-    vecarray = np.zeros((ulen, na, 3))
-    step = 0
-    #compute vector for every timestep
-    for ts in universe.trajectory:
-        vecarray[step] = bgrp.positions - agrp.positions       #na = nb !
-        step+=1
-    #normalize vector
-    norm = np.sqrt((vecarray*vecarray).sum(axis=-1))
-    vecarray /= norm[:,:,np.newaxis]
-    #reorder array for easier correlation
-    vecarray = np.swapaxes(vecarray,0,1)
-    return vecarray
-
-def get_normal_vec(universe, agrp, bgrp, cgrp):
-    """
-    mdorado.veccor.get_normal_vec(universe, agrp, bgrp, cgrp)
-
-    Computes given to AtomGroups agrp, bgrp and cgrp, it computes the
-    time evolution of every normal vector 
-        n = (bgrp[i]-agrp[i]) \cross (cgrp[i]-agrp[i]) 
-    for the whole trajectory. The resulting array can be used as an
-    input for the correlvec or isocorrelvec functions to compute a 
-    reorientational correlation function R_i(t). Does not account for
-    periodic boundary conditions, so only intramolecular vectors should
-    be considered with 'repaired' trajectories, where molecules are not
-    broken between two opposite sites of the box.
-
-    Parameters
-    ----------
-        universe: MD.Analysis.Universe
-            The universe containing the trajectory.
-
-        agrp: AtomGroup from MDAnalysis
-            AtomGroup containing all atoms A used to define the
-            plane containing the atoms A, B and C.
-
-        bgrp: AtomGroup from MDAnalysis
-            AtomGroup containing all atoms B used to define the
-            plane containing the atoms A, B and C.
-
-        cgrp: AtomGroup from MDAnalysis
-            AtomGroup containing all atoms C used to define the
-            plane containing the atoms A, B and C.
-
-    Returns
-    -------
-        ndarray
-            An array of shape N_vec (number of normal vectors), N_ts 
-            (number of timesteps in the universe), N_dim (number of 
-            dimensions) containing the time evolution of all normal
-            vectors n = .bgrp[i]-agrp[i]) \cross (cgrp[i]-agrp[i]). The 
-            vectors are normalized before output. Can be used as input 
-            for the correlvec and isocorrelvec functions.
-    """
-
-    #checking user input
-    try:
-        universe.trajectory
-    except AttributeError:
-        raise AttributeError("universe has no attribute 'trajectory'")
-
-    try: 
-        agrp.positions
-    except AttributeError:
-        raise AttributeError("agrp has no attribute 'positions'")
-
-    try: 
-        bgrp.positions
-    except AttributeError:
-        raise AttributeError("bgrp has no attribute 'positions'")
-
-    try: 
-        cgrp.positions
-    except AttributeError:
-        raise AttributeError("cgrp has no attribute 'positions'")
-    
-    ulen = len(universe.trajectory)
-    na = len(agrp)
-    normvecarray = np.zeros((ulen, na, 3))
-    step = 0
-    #get the 2 vectors and compute normal vector for every timestep
-    for ts in universe.trajectory:
-        vec1array = bgrp.positions - agrp.positions       #na = nb ! 
-        vec2array = cgrp.positions - agrp.positions       #na = nc !
-        normvecarray[step] = np.cross(vec1array, vec2array)
-        step+=1
-    #normalize the normal vectors
-    norm = np.sqrt((normvecarray*normvecarray).sum(axis=-1))
-    normvecarray /= norm[:,:,np.newaxis]
-    #reorder array for easier correlation
-    normvecarray = np.swapaxes(normvecarray,0,1)
-    return normvecarray
+import numpy as np
+from mdorado.correlations import correlate
+from scipy.special import eval_legendre
 
 def correlvec(vecarray, refvec, dt, nlegendre, outfilename=False, normed=True):
     """
@@ -201,8 +48,7 @@ def correlvec(vecarray, refvec, dt, nlegendre, outfilename=False, normed=True):
             Array containing the trajectory of every vector of interest
             in the shape N_vec (number of vectors), N_ts (number of 
             timesteps in the universe), N_dim (number of dimensions).
-            See functions get_vec and get_normal_vec for a way to
-            obtain these functions
+            See module mdorado.vectors for ways to obtain such arrays.
 
         refvec: ndarray or array-like
             Fixed external reference vector. Will be normalized
@@ -272,8 +118,7 @@ def isocorrelvec(vecarray, dt, nlegendre, outfilename=False):
             Array containing the trajectory of every vector of interest
             in the shape N_vec (number of vectors), N_ts (number of
             timesteps in the universe), N_dim (number of dimensions).
-            See functions get_vec and get_normal_vec for a way to
-            obtain these functions
+            See module mdorado.vectors for ways to obtain such arrays.
 
         dt: int or float
             Timestep used in vecarray.
@@ -333,8 +178,7 @@ def isocorrelveclg1(vecarray, dt, outfilename=False):
             Array containing the trajectory of every vector of interest
             in the shape N_vec (number of vectors), N_ts (number of
             timesteps in the universe), N_dim (number of dimensions).
-            See functions get_vec and get_normal_vec for a way to
-            obtain these functions
+            See module mdorado.vectors for ways to obtain such arrays.
 
         dt: int or float
             Timestep used in vecarray.
@@ -392,8 +236,7 @@ def isocorrelveclg2(vecarray, dt, outfilename=False):
             Array containing the trajectory of every vector of interest
             in the shape N_vec (number of vectors), N_ts (number of
             timesteps in the universe), N_dim (number of dimensions).
-            See functions get_vec and get_normal_vec for a way to
-            obtain these functions
+            See module mdorado.vectors for ways to obtain such arrays.
 
         dt: int or float
             Timestep used in vecarray.
