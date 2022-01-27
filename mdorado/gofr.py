@@ -9,9 +9,9 @@ class Gofr:
 
     Computes the average radial distribution function g(r). Between the
     sites in agrp and bgrp (mode="site-site"). If mode is "cms-cms" it
-    first calculates the center-of-mass (cms) of atoms belonging to the 
+    first calculates the center-of-mass (cms) of atoms belonging to the
     same molecule in those groups and then computes g(r) between those
-    cms. The mode "site-cms" mixes both, and agrp is taken atom-wise 
+    cms. The mode "site-cms" mixes both, and agrp is taken atom-wise
     while for bgrp the cms are calculated.
 
     Parameters
@@ -33,21 +33,21 @@ class Gofr:
             Default is 0.
 
         bins: int or sequence of scalars or str, optional
-            Specifies the number of points between rmin and rmax. Is 
+            Specifies the number of points between rmin and rmax. Is
             directly used by numpy.histogram (see there for more info).
             The default is 100.
 
         mode: str, optional
             Mode for calculating g(r). Options are "site-site",
             "cms-cms", and "site-cms". If mode is set to "site-site",
-            the average radial distribution function of all sites in 
-            agrp to all sites in bgrp will be computed. The mode 
-            "cms-cms" will first compute the center-of-mass of sites 
-            belonging to the same molecule in agrp and bgrp, 
+            the average radial distribution function of all sites in
+            agrp to all sites in bgrp will be computed. The mode
+            "cms-cms" will first compute the center-of-mass of sites
+            belonging to the same molecule in agrp and bgrp,
             respectively, and then determin g(r) between those centers
             of mass. The mode "site-cms" is a mix between the two, where
-            every site in agrp is taken individualy but for bgrp the 
-            center-of-mass of sites belonging to the same molecule is 
+            every site in agrp is taken individualy but for bgrp the
+            center-of-mass of sites belonging to the same molecule is
             computed firs. The default is "site-site".
 
         outfilename: str, optional
@@ -55,38 +55,38 @@ class Gofr:
 
     Output
     ------
-        The program creates a file with the distance r in Angstrom 
-        (first column), the radial distribution function g(r) (second 
-        column), the cumulative number of neighbors A in a sphere of 
-        radius r around particle B N_A(r) (third column), and the 
-        cumulative number of neighbors B in a sphere of radius r around 
+        The program creates a file with the distance r in Angstrom
+        (first column), the radial distribution function g(r) (second
+        column), the cumulative number of neighbors A in a sphere of
+        radius r around particle B N_A(r) (third column), and the
+        cumulative number of neighbors B in a sphere of radius r around
         particle A N_B(r) (fourth column).
 
 
     Class Methods
     -------------
-        rdat: ndarray, distance r (center of bins). 
+        rdat: ndarray, distance r (center of bins).
 
         edges: ndarray, edges of the bins.
 
         hist: ndarray, values of g(r).
 
-        annn: ndarray, neighbors A in a sphere of radius r around 
+        annn: ndarray, neighbors A in a sphere of radius r around
                 particle B (N_A(r)).
 
-        bnnn: ndarray, neighbors B in a sphere of radius r around 
+        bnnn: ndarray, neighbors B in a sphere of radius r around
                 particle A (N_B(r)).
 
         avvol: float, average volume of the universe.
 
-        na: int, number of particles A in agrp. If mode is "site-site" 
-                or "site-cms", na is the number of sites in agrp. If 
-                mode is "cms-cms", na is the number of molecules 
+        na: int, number of particles A in agrp. If mode is "site-site"
+                or "site-cms", na is the number of sites in agrp. If
+                mode is "cms-cms", na is the number of molecules
                 (centers-of-mass) in agrp.
 
-        nb: int, number of particles B in bgrp. If mode is "site-site" 
+        nb: int, number of particles B in bgrp. If mode is "site-site"
                 nb is the number of sites in bgrp. If mode is "site-cms"
-                or "cms-cms", nb is the number of molecules 
+                or "cms-cms", nb is the number of molecules
                 (centers-of-mass) in bgrp.
     """
 

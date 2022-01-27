@@ -5,13 +5,13 @@ from MDAnalysis.lib.distances import calc_angles
 
 def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, cosalphamax=1, bins=50, outfilename="hb_analyze.dat", ralphalist=False):
     """
-    mdorado.hb_analyze.hb_analyze(universe, xgrp, hgrp, rmax, 
+    mdorado.hb_analyze.hb_analyze(universe, xgrp, hgrp, rmax,
         ygrp=None, rmin=0, bins=50, outfilename="hb_analyze.dat",
         ralphalist=False)
 
-    Creates a 2D probability density function used for analyzing 
+    Creates a 2D probability density function used for analyzing
     hydrogen bond interactions X-H...Y using the H...Y distance r and
-    the cosine of the XHY angle alpha.  
+    the cosine of the XHY angle alpha.
 
     Parameters
     ----------
@@ -28,14 +28,14 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
             Upper boundary of the H-Y distance in Angstrom.
 
         ygrp: AtomGroup from MDAnalysis, optional.
-            AtomGroup containing all atoms Y. If ygrp=None (default) 
+            AtomGroup containing all atoms Y. If ygrp=None (default)
             xgrp will be taken as acceptor group for the interaction
             X-H...X-
 
         rmin: int or float, optional
             Lower boundary of the H-Y distance in Angstrom. Default is
             0.
-        
+
         cosalphamin: int or float, optional
             Lower boundary of the cosine of the XHY angle cos(alpha).
             The default is -1.
@@ -45,34 +45,34 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
             The default is 1.
 
         bins: int or sequence of scalars or str, optional
-            Specifies the number of points between rmin and rmax as 
+            Specifies the number of points between rmin and rmax as
             well as cosalphamin and cosalphamax. Is directly used by
             numpy.histogram2d (see there for more info). The default is
             50.
 
         outfilename: str, optional
-            The name of the output file. The default is 
+            The name of the output file. The default is
             "hb_analyze.dat".
 
         ralphalist: bool, optional
            Changes the output from the weighted probability density
-           matrix to the list containing all the distances r and 
+           matrix to the list containing all the distances r and
            corresponding coss(alpha) from which the probability density
-           is calculated. The default is False. 
+           is calculated. The default is False.
     Output
     ------
-        The program creates a weighted twodimensional histogram. The 
+        The program creates a weighted twodimensional histogram. The
         first axis represents the H...Y distance r and the second axis
-        represents the cosine of the XHY angle cos(alpha). If 
-        ralphalist=True the file contains the distances and 
+        represents the cosine of the XHY angle cos(alpha). If
+        ralphalist=True the file contains the distances and
         corresponding cosines of HY-pairs as a list: in the first column
-        the distances are written in units of AA and the second column 
+        the distances are written in units of AA and the second column
         indicates the cosine of the corresponding angle cos(alpha), both
-        in the respective range rmin to rmax and cosalphamin to 
+        in the respective range rmin to rmax and cosalphamin to
         cosalphamax.
     """
-    #To do: 
-    #implementing capped_distance for distance calculation 
+    #To do:
+    #implementing capped_distance for distance calculation
     #implement dummy histogram to make more bins options work
 
     #checking user input
@@ -80,11 +80,11 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
         universe.trajectory
     except AttributeError:
         raise AttributeError("universe has no attribute 'trajectory'")
-    try: 
+    try:
         universe.coord.dimensions
     except AttributeError:
         raise AttributeError("universe object has no attribute 'coord.dimensions'.")
-    
+
     try:
         xgrp.positions
     except AttributeError:
@@ -106,7 +106,7 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
         raise AttributeError("hgrp[0] has no attribute 'position'")
 
     nh = int(hgrp.__len__())
-    if nh != int(xgrp.__len__()):  
+    if nh != int(xgrp.__len__()):
         raise ValueError("hgrp and xgrp do not contain the same number of atoms")
 
     if ygrp is None:

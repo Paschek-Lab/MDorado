@@ -35,7 +35,7 @@ def dipol_correl(vecarray, dt, outfilename=False):
     indices = normarray.sum(-1).nonzero()
     normarray = normarray[indices]
     vecarray = vecarray[indices]
-    nvec = len(normarray) #update number of vectors 
+    nvec = len(normarray) #update number of vectors
 
     allcorrel = np.zeros(ulen)
     invnormcube_array = np.reciprocal(normarray)**3
@@ -43,8 +43,8 @@ def dipol_correl(vecarray, dt, outfilename=False):
         xarray = vecarray[mol][...,0]
         yarray = vecarray[mol][...,1]
         zarray = vecarray[mol][...,2]
-        invnormcube = invnormcube_array[mol] 
-        
+        invnormcube = invnormcube_array[mol]
+
         xsq = correlate(xarray*xarray*invnormcube)
         ysq = correlate(yarray*yarray*invnormcube)
         zsq = correlate(zarray*zarray*invnormcube)
@@ -53,7 +53,7 @@ def dipol_correl(vecarray, dt, outfilename=False):
         yz = correlate(yarray*zarray*invnormcube)
         normcorrel = correlate(invnormcube)
         allcorrel += 1.5 * ( xsq + ysq + zsq + 2*xy + 2*xz + 2*yz ) - 0.5 * normcorrel
-    
+
     timesteps = np.arange(ulen)*dt
     if outfilename:
         filename=str(outfilename)

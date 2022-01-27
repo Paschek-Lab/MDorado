@@ -14,12 +14,11 @@ class TestProgram(unittest.TestCase):
         hgrp = u.select_atoms("name hw and resid 15")[:1:]
         with tempfile.TemporaryDirectory() as tmpdirname:
             os.chdir(tmpdirname)
-            calc_lifetime(universe=u, timestep=0.2, xgrp=xgrp, hgrp=hgrp, ygrp=ygrp, cutoff_hy=2.5, angle_cutoff=2.27, cutoff_xy=3.5)
+            calc_lifetime(universe=u, timestep=0.2, xgrp=xgrp, hgrp=hgrp, ygrp=ygrp, cutoff_hy=2.5,
+                          angle_cutoff=2.27, cutoff_xy=3.5)
             output = np.loadtxt("ct_0.dat")
-
             test_output = np.loadtxt(test_lifetime)
             self.assertIsNone(np.testing.assert_array_almost_equal(output, test_output))
 
 if __name__ == '__main__':
     unittest.main()
-

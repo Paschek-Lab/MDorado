@@ -1,5 +1,3 @@
-import numpy as np
-
 """
 mdorado.vectors
 
@@ -14,25 +12,35 @@ Functions:
         for cuboid simulation boxes (all angles are 90°).
 
     mdorado.vectors.norm_vecarray(vecarray)
-        Given an array of vectors, normalizes each vector and returns the array of normalized vectors as well as the length of each vector.
+        Given an array of vectors, normalizes each vector and returns
+        the array of normalized vectors as well as the length of each
+        vector.
 
     mdorado.vectors.vectormatrix(apos, bpos)
-        Given two sets of particle positions [A_1, A_2, ..., A_n] and [B_1, B_2, ..., B_m] computes the vectors for all combinations A_iB_j.
+        Given two sets of particle positions [A_1, A_2, ..., A_n] and
+        [B_1, B_2, ..., B_m] computes the vectors for all combinations
+        A_iB_j.
 
     mdorado.vectors.get_vectormatrix(universe, agrp, bgrp, pbc=True)
-        Uses mdorado.vectors.vectormatrix to compute a vector matrix containing all vectors between all combinations of particles A and B for every timestep.
+        Uses mdorado.vectors.vectormatrix to compute a vector matrix
+        containing all vectors between all combinations of particles A
+        and B for every timestep.
 
     mdorado.vectors.get_vecarray(universe, agrp, bgrp, pbc=True)
         Computes given to AtomGroups agrp and bgrp, it computes the time
-        evolution of every vector bgrp[i]-agrp[i] for the whole trajectory.
-        Can account for periodic boundary conditions for cuboid boxes.
+        evolution of every vector bgrp[i]-agrp[i] for the whole
+        trajectory. Can account for periodic boundary conditions for
+        cuboid boxes.
 
-    mdorado.vectors.get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True)
-        Computes given to AtomGroups agrp, bgrp and cgrp, it computes the
-        normal vectors
-            n = (bgrp[i]-agrp[i]) \cross (cgrp[i]-agrp[i])
+    mdorado.vectors.get_normal_vecarray(universe, agrp, bgrp, cgrp,
+                                        pbc=True)
+        Computes given to AtomGroups agrp, bgrp and cgrp, it computes
+        the normal vectors
+            n = (bgrp[i]-agrp[i]) \\cross (cgrp[i]-agrp[i])
         for every timestep of the trajectory.
 """
+
+import numpy as np
 
 def pbc_vecarray(vecarray, box):
     """
@@ -60,8 +68,8 @@ def pbc_vecarray(vecarray, box):
             corrected for the minimum image convention.
     """
 
-    ndim = vecarray.shape[-1] 
-    try: 
+    ndim = vecarray.shape[-1]
+    try:
         boxhalf = box * 0.5
     except TypeError:
         box = np.array(box)
@@ -69,7 +77,7 @@ def pbc_vecarray(vecarray, box):
     transarray = 1 * vecarray.T
     #ndarray.T returns a view, meaning that in-place changes to
     #transarray will change vecarray. This is undesirable as the
-    #function should return a new array without changing the input. 
+    #function should return a new array without changing the input.
     #"1 * ndarray.T" breaks that behavior and creates a new array.
     for dimension in range(ndim):
         transarray[dimension, transarray[dimension] > boxhalf[dimension]] -= box[dimension]
@@ -80,7 +88,8 @@ def norm_vecarray(vecarray):
     """
     mdorado.vectors.norm_vecarray(vecarray)
 
-    Given an array of vectors, normalizes each vector and returns the array of normalized vectors as well as the length of each vector.
+    Given an array of vectors, normalizes each vector and returns the
+    array of normalized vectors as well as the length of each vector.
 
     Parameters
     ----------
@@ -105,20 +114,24 @@ def vectormatrix(apos, bpos):
     """
     mdorado.vectors.vectormatrix(apos, bpos)
 
-    Given two sets of particle positions [A_1, A_2, ..., A_n] and [B_1, B_2, ..., B_m] computes the vectors for all combinations A_iB_j. 
+    Given two sets of particle positions [A_1, A_2, ..., A_n] and
+    [B_1, B_2, ..., B_m] computes the vectors for all combinations
+    A_iB_j.
 
     Parameters
     ----------
         apos: ndarray
-            Array of shape (n, 3) containing the position vectors of all particles A.
+            Array of shape (n, 3) containing the position vectors of all
+            particles A.
 
         bpos: ndarray
-            Array of shape (m, 3) containing the position vectors of all particles B.
+            Array of shape (m, 3) containing the position vectors of all
+            particles B.
 
     Returns
     -------
         ndarray
-            Returns an array of shape (n, m, 3) containing all vectors 
+            Returns an array of shape (n, m, 3) containing all vectors
             AB[i, j] = bpos[j] - apos[i].
     """
 
@@ -136,8 +149,10 @@ def vectormatrix(apos, bpos):
 def get_vectormatrix(universe, agrp, bgrp, pbc=True):
     """
     mdorado.vectors.get_vectormatrix(universe, agrp, bgrp, pbc=True)
-    
-    Uses mdorado.vectors.vectormatrix to compute a vector matrix containing all vectors between all combinations of particles A and B for every timestep in a universe.
+
+    Uses mdorado.vectors.vectormatrix to compute a vector matrix
+    containing all vectors between all combinations of particles A and B
+    for every timestep in a universe.
 
     Parameters
     ----------
@@ -189,7 +204,7 @@ def get_vecarray(universe, agrp, bgrp, pbc=True):
     mdorado.vectors.get_vecarray(universe, agrp, bgrp, pbc=True)
 
     Given two AtomGroups agrp and bgrp, it computes the time evolution
-    of every vector bgrp[i]-agrp[i] for the whole trajectory. Can 
+    of every vector bgrp[i]-agrp[i] for the whole trajectory. Can
     account for periodic boundary conditions for cuboid boxes.
 
     Parameters
@@ -208,7 +223,7 @@ def get_vecarray(universe, agrp, bgrp, pbc=True):
             applied to find the shortest vector from A to an image of B.
             Calls the mdorado.vectors.pbc_vecarray function. Only works
             for cuboid boxes (all angles are 90°). Default is True.
-            
+
     Returns
     -------
         ndarray
@@ -238,11 +253,12 @@ def get_vecarray(universe, agrp, bgrp, pbc=True):
 
 def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
     """
-    mdorado.vectors.get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True)
+    mdorado.vectors.get_normal_vecarray(universe, agrp, bgrp, cgrp,
+                                        pbc=True)
 
     Computes given to AtomGroups agrp, bgrp and cgrp, it computes the
     normal vectors
-        n = (bgrp[i]-agrp[i]) \cross (cgrp[i]-agrp[i])
+        n = (bgrp[i]-agrp[i]) \\cross (cgrp[i]-agrp[i])
     for every timestep of the trajectory.
 
     Parameters
@@ -265,7 +281,7 @@ def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
         pbc: bool, optional
             Specifies whether periodic boundary conditions should be
             applied to find the shortest vector from A to an image of B
-            as well as from A to an image of C. Calls the 
+            as well as from A to an image of C. Calls the
             mdorado.vectors.pbc_vecarray function. Only works for cuboid
             boxes (all angles are 90°).
 
@@ -275,7 +291,7 @@ def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
             An array of shape N_vec (number of normal vectors), N_ts
             (number of timesteps in the universe), N_dim (number of
             dimensions) containing the time evolution of all normal
-            vectors n = bgrp[i]-agrp[i]) \cross (cgrp[i]-agrp[i]).
+            vectors n = bgrp[i]-agrp[i]) \\cross (cgrp[i]-agrp[i]).
     """
 
     ulen = len(universe.trajectory)
@@ -291,10 +307,10 @@ def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
             raise
         if pbc:
             box = universe.coord.dimensions
-            vec1array = pbc_vecarray(vec1array, box) 
-            vec2array = pbc_vecarray(vec2array, box) 
+            vec1array = pbc_vecarray(vec1array, box)
+            vec2array = pbc_vecarray(vec2array, box)
         normalvecarray[step] = np.cross(vec1array, vec2array)
-        step+=1
+        step += 1
     #reorder array for easier correlation
-    normalvecarray = np.swapaxes(normalvecarray,0,1)
+    normalvecarray = np.swapaxes(normalvecarray, 0, 1)
     return normalvecarray
