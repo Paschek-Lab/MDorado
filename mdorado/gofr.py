@@ -1,5 +1,4 @@
 import numpy as np
-import MDAnalysis
 from MDAnalysis.analysis.distances import capped_distance
 
 class Gofr:
@@ -90,7 +89,8 @@ class Gofr:
                 (centers-of-mass) in bgrp.
     """
 
-    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site", outfilename="gofr.dat"):
+    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site",
+                 outfilename="gofr.dat"):
         #checking user input
         try:
             universe.trajectory
@@ -121,7 +121,8 @@ class Gofr:
         self.filename = str(outfilename)
         self.ulen = len(self.u.trajectory)
         #initializing histogram and edges
-        self.hist, self.edges = np.histogram([], bins=self.bins, range=[self.rmin, self.rmax], density=False)
+        self.hist, self.edges = np.histogram([], bins=self.bins, range=[self.rmin, self.rmax],
+                                             density=False)
         self.hist = np.array(self.hist, dtype=np.float64)
         self.rdat = np.zeros(len(self.hist), dtype=np.float64)
         self.avvol = 0
@@ -133,7 +134,8 @@ class Gofr:
         elif mode == "site-cms":
             self._gofr_a_cms()
         else:
-            raise ValueError("Gofr: mode has to be one of the following: site-site, cms-cms, site-cms")
+            raise ValueError("Gofr: mode has to be one of the following: site-site, cms-cms,\
+                              site-cms")
         self._gatherdat()
 
     #site-site radial distribution function
@@ -148,9 +150,11 @@ class Gofr:
             vol = dim[0]*dim[1]*dim[2]
             self.avvol += vol
             #capped_distance seems to be faster without rmin
-            pair, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
-            #compute histogram from distances between sites, ihist represents numbers of entries, normalization follows later
-            ihist, edges = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax], density=False)
+            _, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
+            #compute histogram from distances between sites, ihist represents numbers of entries
+            #normalization follows later
+            ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
+                                    density=False)
             self.hist += ihist*vol
 
     #cms-cms radial distribution function
@@ -167,9 +171,11 @@ class Gofr:
             acms = self.agrp.center(self.agrp.masses, compound='residues')
             bcms = self.bgrp.center(self.bgrp.masses, compound='residues')
             #capped_distance seems to be faster without rmin
-            pair, dab = capped_distance(acms, bcms, self.rmax, box=dim)
-            #compute histogram from distances between cms, ihist represents numbers of entries, normalization follows later
-            ihist, edges = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax], density=False)
+            _, dab = capped_distance(acms, bcms, self.rmax, box=dim)
+            #compute histogram from distances between cms, ihist represents numbers of entries
+            #normalization follows later
+            ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
+                                    density=False)
             self.hist += ihist*vol
 
     #site-cms radial distribution function
@@ -186,9 +192,11 @@ class Gofr:
             self.avvol += vol
             bcms = self.bgrp.center(self.bgrp.masses, compound='residues')
             #capped_distance seems to be faster without rmin
-            pair, dab = capped_distance(self.agrp.positions, bcms, self.rmax, box=dim)
-            #compute histogram from distances between site and cms, ihist represents numbers of entries, normalization follows later
-            ihist, edges = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax], density=False)
+            _, dab = capped_distance(self.agrp.positions, bcms, self.rmax, box=dim)
+            #compute histogram from distances between site and cms, ihist represents numbers of
+            #entries, normalization follows later
+            ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
+                                    density=False)
             self.hist += ihist*vol
 
     #normalization of histogram and output
@@ -208,5 +216,7 @@ class Gofr:
             self.rdat[i] = (self.edges[i] + self.edges[i+1]) * 0.5
             #normalizing hist using the sphere-shell volume
             self.hist[i] = factor*self.hist[i]/(self.edges[i+1]**3-self.edges[i]**3)
-        #'%.10G': Floating point format. Uses uppercase exponential format if exponent is less than -4, decimal format otherwise.
-        np.savetxt(self.filename, np.array([self.rdat, self.hist, self.annn, self.bnnn]).T, fmt='%.10G')
+        #'%.10G': Floating point format. Uses uppercase exponential format if exponent is less than
+        #-4, decimal format otherwise.
+        np.savetxt(self.filename, np.array([self.rdat, self.hist, self.annn, self.bnnn]).T,
+                   fmt='%.10G')

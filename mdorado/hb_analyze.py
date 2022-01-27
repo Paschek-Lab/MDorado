@@ -1,9 +1,9 @@
 import numpy as np
-import MDAnalysis
 from MDAnalysis.analysis.distances import distance_array
 from MDAnalysis.lib.distances import calc_angles
 
-def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, cosalphamax=1, bins=50, outfilename="hb_analyze.dat", ralphalist=False):
+def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, cosalphamax=1,
+               bins=50, outfilename="hb_analyze.dat", ralphalist=False):
     """
     mdorado.hb_analyze.hb_analyze(universe, xgrp, hgrp, rmax,
         ygrp=None, rmin=0, bins=50, outfilename="hb_analyze.dat",
@@ -123,17 +123,17 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
     cosalphamin = float(cosalphamin)
     cosalphamax = float(cosalphamax)
 
-    bins = bins
     datacollect = open(outfilename, "w")
     #create r, cosalpha list for output
-    if ralphalist==True:
+    if ralphalist:
         for t in universe.trajectory[::]:
             #box dimensions for periodic boundary condition
             dim = universe.coord.dimensions
             dhy = distance_array(hgrp.positions, ygrp.positions, box=dim)
             indices = np.nonzero((dhy < rmax) * (dhy > rmin))
             #only calculate angles where the distance is between the criteria
-            radalpha = calc_angles(xgrp[indices[0]].positions, hgrp[indices[0]].positions, ygrp[indices[1]].positions, box=dim)
+            radalpha = calc_angles(xgrp[indices[0]].positions, hgrp[indices[0]].positions,
+                                   ygrp[indices[1]].positions, box=dim)
             #assignment dhy->radalpha works out for the flat dhy array (C-style/row-major)
             flatdhy = dhy[indices].flatten()
             flatcosalpha = np.cos(radalpha)
@@ -155,15 +155,19 @@ def hb_analyze(universe, xgrp, hgrp, rmax, ygrp=None, rmin=0, cosalphamin=-1, co
             dhy = distance_array(hgrp.positions, ygrp.positions, box=dim)
             indices = np.nonzero((dhy < rmax) * (dhy > rmin))
             #only calculate angles where the distance is between the criteria
-            radalpha = calc_angles(xgrp[indices[0]].positions, hgrp[indices[0]].positions, ygrp[indices[1]].positions, box=dim)
+            radalpha = calc_angles(xgrp[indices[0]].positions, hgrp[indices[0]].positions,
+                                   ygrp[indices[1]].positions, box=dim)
             #assignment dhy->radalpha works out for the flat dhy array (C-style/row-major)
             flatdhy = dhy[indices].flatten()
             flatcosalpha = np.cos(radalpha)
             weights = (1.0/flatdhy)**2
             #angle criteria are considered in histogram range
-            stepharray, xedges, yedges = np.histogram2d(flatdhy, flatcosalpha,  bins=bins, range=[[rmin, rmax], [cosalphamin, cosalphamax]], weights=weights, density=False)
+            stepharray, xedges, yedges = np.histogram2d(flatdhy, flatcosalpha, bins=bins,
+                                                        range=[[rmin, rmax],
+                                                               [cosalphamin, cosalphamax]],
+                                                        weights=weights, density=False)
             #histogram contains only the counts and can therefore be added up
-            harray+=stepharray
+            harray += stepharray
         #compute probability density from the counts
         area = abs((xedges[0] - xedges[1]) * (yedges[0] - yedges[1]))
         allcount = np.sum(harray)
