@@ -174,13 +174,13 @@ def get_vectormatrix(universe, agrp, bgrp, pbc=True):
     Returns
     -------
         ndarray
-            Array of the shape (N_steps, N_A, N_B, 3), where N_steps is
-            the number of timesteps in the universe, N_A the number of
-            particles A, N_B the number of particles B, and the last
-            axis refers to the three directions in space x, y and z. For
-            example, the array element AB[i, j, k, 2] refers to the z-
-            component of the vector pointing from A_j to B_k at the i-th
-            timestep of the simulation.
+            Array of the shape (N_A, N_B, N_steps, 3), where N_A the
+            number of particles A, N_B the number of particles B,
+            N_steps is the number of timesteps in the universe, and the
+            last axis refers to the three directions in space x, y and
+            z. For example, the array element AB[i, j, k, 2] refers to
+            the z-component of the vector pointing from A_j to B_k at
+            the i-th timestep of the simulation.
     """
 
     ulen = len(universe.trajectory)
