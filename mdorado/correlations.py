@@ -24,8 +24,8 @@ def correlate(a, b=None):
     """
     a = np.array(a)
     #If no b is given: compute autocorrelation
-    if np.array(b).all()==None:
-        b=a
+    if np.array(b).all() == None:
+        b = a
     else:
         b = np.array(b)
 
@@ -34,13 +34,12 @@ def correlate(a, b=None):
         raise TypeError("""
             correlate: a and b have to be one-dimensional arrays or lists.
             """)
-    
+
     ct = signal.correlate(b, a, method='auto', mode='full')
     #remove values for t<0
     ct = ct[ct.size // 2:]
     ct = ct.astype(float)
-    ctsize = ct.size
     alen = len(a)
-    #normalize ct based on number of points for correlation 
+    #normalize ct based on number of points for correlation
     ct /= np.flip(np.arange(1, alen+1))
     return ct
