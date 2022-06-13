@@ -6,13 +6,65 @@ from scipy import signal
 from MDAnalysis.analysis.distances import distance_array
 from MDAnalysis.lib.distances import calc_angles
 
+def do_bnp(hpoparray, tarray, diffusion_coeff, boxlen):
+    """
+    mdorado.lifetime.do_bnp(tarray, hbpoparray, diffusion_coeff,
+                            boxlen)
+
+    Applies the BNP-correction to an hydrogen-bond population
+    correlation function compute with the Luzar-Chandler-
+    approach:
+        C(t) = <h(0)*h(t)>/<h>
+
+    Parameters
+    ----------
+        hpoparray: ndarray
+            Array containing the hydrogen-bond population
+            correlation function.
+
+        tarray: ndarray
+            Array containing all timesteps for hpoparray.
+
+        diffusion_coeff: float
+            The inter-diffusion coefficient in [unit]???
+
+        boxlen: float
+            One length of the cubic simulation box in A.
+
+    Returns
+    -------
+        ct_bnp: ndarray
+            The corrected hydrogen-bond population correlation
+            function.
+    """
+    length = len(tarray)
+    ct_lc = hpoparray/hpoparray[0]
+    ct_bnp = np.zeros(length)
+    ct_bnp[0] = 1
+
+    u = tarray * (diffusion_coeff/boxlen**2)
+    for count, value in enumerate(u[1:]):
+        inc = 1
+        nn = 1
+        sum = 0
+        nlist = []
+        while inc > inc_limit:
+            inc = np.exp(-nn*nn/(4.0*value))
+            sum += inc
+            nn += 1
+        nlist.append(nn)
+        q = (1+2*sum)**3
+        corr = (q-1)/((4*np.pi*value)**(3/2))
+        ct_bnp[count+1] = ct_lc[count+1] - hpoparray[0]*corr
+    return ct_bnp
+
 #check for finished output files in case computation was restarted
 def _check_files():
     #calclist will contain id of donors already computed
     calclist = []
     allarray = np.arange(_nh)
     for i in allarray:
-        filename="ct_"+str(i)+".dat"
+        filename = "ct_"+str(i)+".dat"
         if os.path.isfile(filename):
             #check for missing values if filename exists in case the writing process was interupted
             data = np.genfromtxt(filename, unpack=True, invalid_raise=False, missing_values="nan")
@@ -92,7 +144,7 @@ def _get_lt(donornr):
 
 def calc_lifetime(universe, timestep, xgrp, hgrp, cutoff_hy, angle_cutoff, cutoff_xy, ygrp=None, nproc=1, check_memory=True):
     """
-    alexandria.lifetime.calc_lifetime(universe, timestep xgrp, hgrp,
+    mdorado.lifetime.calc_lifetime(universe, timestep xgrp, hgrp,
     cutoff_hy, angle_cutoff, cutoff_xy, ygrp=None, nproc=1,
     check_memory=True)
 
