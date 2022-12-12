@@ -1,5 +1,6 @@
 import numpy as np
 from MDAnalysis.analysis.distances import capped_distance
+import operator
 
 class Gofr:
     """
@@ -52,6 +53,12 @@ class Gofr:
         outfilename: str, optional
             The name of the output file. The default is "gofr.dat".
 
+        count_only: str, optional
+            checks the return of capped_distance for same resid. (only for 'site-site' implemented)
+            
+            'inter' -> removes counts on reference residue (only intermolecular counts)
+            'intra' -> removes counts on other than reference resiude (only intramolecular counts)
+
     Output
     ------
         The program creates a file with the distance r in Angstrom
@@ -89,8 +96,8 @@ class Gofr:
                 (centers-of-mass) in bgrp.
     """
 
-    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site",
-                 outfilename="gofr.dat"):
+    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site",  
+                 count_only=None, outfilename="gofr.dat"):
         #checking user input
         try:
             universe.trajectory
@@ -115,6 +122,13 @@ class Gofr:
         self.u = universe
         self.agrp = agrp
         self.bgrp = bgrp
+        if count_only == 'inter':
+            self.count_only=operator.ne
+        elif count_only == 'intra':    
+            self.count_only=operator.eq
+        else:
+            self.count_only=None
+        
         self.rmax = float(rmax)
         self.rmin = float(rmin)
         self.bins = bins
@@ -137,7 +151,7 @@ class Gofr:
             raise ValueError("Gofr: mode has to be one of the following: site-site, cms-cms,\
                               site-cms")
         self._gatherdat()
-
+    
     #site-site radial distribution function
     def _gofr(self):
         #na and nb are number of sites in agrp and bgrp
@@ -149,8 +163,16 @@ class Gofr:
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
             self.avvol += vol
+    
             #capped_distance seems to be faster without rmin
-            _, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
+            pairs, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
+            
+            #TODO: implement directly the seperation of intra and intermolecular counts 
+            
+            #remove counts if it belongs to the reference group 
+            if self.count_only is not None:
+                dab = dab[( self.count_only(self.agrp.resids[pairs[:,0]],  self.bgrp.resids[pairs[:,1]]) )]
+                
             #compute histogram from distances between sites, ihist represents numbers of entries
             #normalization follows later
             ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
