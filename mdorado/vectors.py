@@ -234,13 +234,13 @@ def get_vecarray(universe, agrp, bgrp, pbc=True):
     """
 
     ulen = len(universe.trajectory)
-    vecarray = np.zeros((ulen, len(agrp), 3), dtype=np.float32)
+    vecarray = np.zeros((ulen, len(bgrp), 3), dtype=np.float32)
     step = 0
     for ts in universe.trajectory:
         try:
             diffarray = bgrp.positions - agrp.positions
         except ValueError:
-            print("Error: agrp and bgrp have to contain the same number of atoms!")
+            print("Error: agrp and bgrp have to contain either the same number of atoms or at least agrp has one atom position!")
             raise
         if pbc:
             box = universe.coord.dimensions
