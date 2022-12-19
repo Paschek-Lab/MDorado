@@ -49,12 +49,12 @@ def build_combination(grp1,grp2, exclude_reverse=True, exclude_si=True):
     if len(cond) == 0:
         cond += "True"
 
-    print(f'Combination will be evaluated by: \n',cond)
+    # print(f'Combination will be evaluated by: \n',cond)
     
     for nucleus1 in grp1:
         comb_dict[nucleus1]=[]
         for nucleus2 in grp2:
-            # check=[nucleus2,nucleus1]
+            check=[nucleus2,nucleus1]
             if eval(cond):
                 comb.append([nucleus1,nucleus2])
                 comb_dict[nucleus1].append([nucleus1,nucleus2])
@@ -167,23 +167,24 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
             comb_dict key. 
     """
     
-    G2=dict()
+    g2=dict()
     #select every key once as reference atomtype
-    for ref in comb_dict.keys():
+    for ref_at in comb_dict.keys():
         cum_sum=0
-        for pair in comb_dict[ref]:
+        for pair in comb_dict[ref_at]:
             at1=u.select_atoms(f"name {pair[0]}")
             at2=u.select_atoms(f"name {pair[1]}")            
             at1_at2= get_vecarray(universe=u, agrp=at1, bgrp=at2, pbc=True)
+            n_resids=at1_at2.shape[0] 
             timesteps,allcorrel= dipol_correl(at1_at2,dt)
-            cum_sum+=allcorrel
-        cum_sum= coeff_dict[ref]*cum_sum
-        G2[ref]=cum_sum
+            cum_sum+=allcorrel/n_resids
+        cum_sum*= coeff_dict[ref_at]
+        g2[ref_at]=cum_sum
         
         if outfilename is not None:
-            np.savetxt(f"{outfilename}_{ref}_intra.dat", np.array([timesteps, cum_sum]).T, fmt='%.10G')
+            np.savetxt(f"{outfilename}_{ref_at}_intra.dat", np.array([timesteps, cum_sum]).T, fmt='%.10G')
 
-    return timesteps,G2
+    return timesteps,g2
 
 
 
@@ -236,34 +237,33 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,m
             containing the dipolar relaxation functions for every 
             comb_dict key. 
     """
-    G2=dict()
-    m=0
+    g2=dict()
     for ref in reference_residues:
         print('reference resiudes:',ref)
-        G2[ref]=dict()
+        g2[ref]=dict()
         maj_cum_sum= 0
         for key in comb_dict.keys():
-            print("selected atomname:",key)
+            print("\t selected atomname:",key)
             sub_cum_sum=0
             for pair in  comb_dict[key]:
                 
                 # select only reference resid for agrp
                 at1=u.select_atoms(f"name {pair[0]} and resid {ref}")
-                at2=u.select_atoms(f"name {pair[1]}")   
-                at1_at2=get_vecarray(universe=u, agrp=at1, bgrp=at2, pbc=True)
-                
-                #remove count if same pair0 and pair1 are have the same atomtypes
                 if pair[0] == pair[1]:
-                    at1_at2 = np.delete(at1_at2,ref-1,0)
+                   at2=u.select_atoms(f"name {pair[1]} and not resid {ref} ")  
+                else:
+                    at2=u.select_atoms(f"name {pair[1]}")
+                    
+                at1_at2=get_vecarray(universe=u, agrp=at1, bgrp=at2, pbc=True)
                     
                 timesteps,allcorrel= dipol_correl(at1_at2,dt)
                 # collect correlation for each possible combinaion in dict entry
                 sub_cum_sum+=allcorrel
-                m+=1
+
             
             #multiply by occurences of atomgroup
             sub_cum_sum*= coeff_dict[key]
-            G2[ref][key]=sub_cum_sum
+            g2[ref][key]=sub_cum_sum
             maj_cum_sum+= sub_cum_sum
             
             if outfilename is not None and sub:
@@ -272,7 +272,7 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,m
         if outfilename is not None and maj:
             np.savetxt(f"{outfilename}_{ref}_inter.dat", np.array([timesteps, maj_cum_sum]).T, fmt='%.10G')
 
-    return timesteps,G2
+    return timesteps,g2
 
     
     
