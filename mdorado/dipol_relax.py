@@ -294,7 +294,8 @@ def intra_dist(u, comb_list, resname, residues=10,outfilename=None):
             #normalize vector matrix
             norm_vecmat=LA.norm(vecmatrix, axis=3)
             #build time average
-            avg=np.mean(norm_vecmat, axis=2, where=(norm_vecmat!=0))
+            avg=np.mean(norm_vecmat, axis=2)
+            avg[avg==0]=np.nan
             #build reciprocal and 6th power
             rezi_r=np.reciprocal(avg,where=(avg != np.nan)) 
             rezi_r6=np.power(rezi_r,6,where=(rezi_r != np.nan))
@@ -302,12 +303,10 @@ def intra_dist(u, comb_list, resname, residues=10,outfilename=None):
             #avearage over all residues 
             #consider matrix symmetry for equal nuclei
             if nuc1==nuc2:
-                rezi_r6=np.nanmean( rezi_r6 )/2
+                rezi_r6_av=np.nanmean( rezi_r6)/2
             else:
-                rezi_r6=np.nanmean( rezi_r6 )
-                
-            doca.append(rezi_r6)
-
+                rezi_r6_av=np.nanmean( rezi_r6)                
+            doca.append(rezi_r6_av)
         doca_length=np.power(np.mean(doca),-1/6)  
         
         
