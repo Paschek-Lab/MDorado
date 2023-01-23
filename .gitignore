@@ -1,0 +1,3 @@
+# Ignore the pycashe and the .pyc files
+__pycache__
+*.pyc
