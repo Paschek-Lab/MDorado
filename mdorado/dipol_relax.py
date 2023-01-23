@@ -1,5 +1,5 @@
 import numpy as np
-from mdorado.vectors import norm_vecarray, get_vecarray
+from mdorado.vectors import norm_vecarray, get_vecarray, get_vectormatrix
 from mdorado.correlations import correlate
 
 
@@ -168,9 +168,10 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
     """
     
     g2=dict()
+    ulen=u.trajectory.n_frames
     #select every key once as reference atomtype
     for ref_at in comb_dict.keys():
-        cum_sum=0
+        cum_sum=np.zeros(ulen)
         for pair in comb_dict[ref_at]:
             at1=u.select_atoms(f"name {pair[0]}")
             at2=u.select_atoms(f"name {pair[1]}")            
@@ -182,7 +183,7 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
         g2[ref_at]=cum_sum
         
         if outfilename is not None:
-            np.savetxt(f"{outfilename}_{ref_at}_intra.dat", np.array([timesteps, cum_sum]).T, fmt='%.10G')
+            np.savetxt(f"{outfilename}_{ref_at}_total.dat", np.array([timesteps, cum_sum]).T, fmt='%.10G')
 
     return timesteps,g2
 
@@ -190,7 +191,7 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
 
 
 
-def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,maj=True,outfilename=None):
+def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=True,outfilename=None):
     """
     mdorado.dipol_relax.calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,maj=True,outfilename=None)
 
@@ -213,8 +214,8 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,m
             contains the coefficient by which each correlation time 
             is multiplied if a reduction to subgroups is made.
             
-        reference_residues: list of ints
-            Contains the information of which resids should be calculated.
+        ref_res: int
+            Set supplied resid as reference resid. 
         
         sub: bool, optional
             Creats a file for each combination entry in comb_dict. Works only if 
@@ -238,42 +239,78 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,m
             comb_dict key. 
     """
     g2=dict()
-    for ref in reference_residues:
-        print('reference resiudes:',ref)
-        g2[ref]=dict()
-        maj_cum_sum= 0
-        for key in comb_dict.keys():
-            print("\t selected atomname:",key)
-            sub_cum_sum=0
-            for pair in  comb_dict[key]:
-                
-                # select only reference resid for agrp
-                at1=u.select_atoms(f"name {pair[0]} and resid {ref}")
-                if pair[0] == pair[1]:
-                   at2=u.select_atoms(f"name {pair[1]} and not resid {ref} ")  
-                else:
-                    at2=u.select_atoms(f"name {pair[1]}")
-                    
-                at1_at2=get_vecarray(universe=u, agrp=at1, bgrp=at2, pbc=True)
-                    
-                timesteps,allcorrel= dipol_correl(at1_at2,dt)
-                # collect correlation for each possible combinaion in dict entry
-                sub_cum_sum+=allcorrel
 
+    print('reference resiudes:',ref_res)
+    g2[ref_res]=dict()
+    ulen=u.trajectory.n_frames
+    maj_cum_sum= np.zeros(ulen)
+    for key in comb_dict.keys():
+        print("\t selected atomname:",key)
+        sub_cum_sum = np.zeros(ulen)
+        for pair in  comb_dict[key]:
             
-            #multiply by occurences of atomgroup
-            sub_cum_sum*= coeff_dict[key]
-            g2[ref][key]=sub_cum_sum
-            maj_cum_sum+= sub_cum_sum
+            # select only reference resid for agrp
+            at1=u.select_atoms(f"name {pair[0]} and resid {ref_res}")
+            at2=u.select_atoms(f"name {pair[1]} and not resid {ref_res} ")  
             
-            if outfilename is not None and sub:
-                np.savetxt(f"{outfilename}_{ref}_{key}.dat", np.array([timesteps, sub_cum_sum]).T, fmt='%.10G')   
-                      
-        if outfilename is not None and maj:
-            np.savetxt(f"{outfilename}_{ref}_inter.dat", np.array([timesteps, maj_cum_sum]).T, fmt='%.10G')
+            at1_at2=get_vecarray(universe=u, agrp=at1, bgrp=at2, pbc=True)
+            
+            timesteps,allcorrel= dipol_correl(at1_at2,dt)
+            # collect correlation for each possible combinaion in dict entry
+            sub_cum_sum+=allcorrel
+
+        
+        #multiply by occurences of atomgroup
+        sub_cum_sum*= coeff_dict[key]
+        g2[ref_res][key]=sub_cum_sum
+        maj_cum_sum+= sub_cum_sum
+        
+        if outfilename is not None and minor:
+            np.savetxt(f"{outfilename}_{key}_minor.dat", np.array([timesteps, sub_cum_sum]).T, fmt='%.10G')   
+    if outfilename is not None and major:
+        np.savetxt(f"{outfilename}_major.dat", np.array([timesteps, maj_cum_sum]).T, fmt='%.10G')
 
     return timesteps,g2
 
     
     
+
+def intra_dist(u, comb_list, resname, residues=10,outfilename=None):
     
+    for comb in comb_list:
+        nuc1=comb[0]
+        nuc2=comb[1]
+        
+        at1=u.select_atoms(f"name {nuc1}* and resname {resname}  and not name DRUD")
+        at2=u.select_atoms(f"name {nuc2}* and resname {resname}  and not name DRUD")
+        
+        doca=[]
+        for resid in np.arange(1,residues+1,1):
+            at1res=at1.select_atoms(f'resid {resid}')
+            at2res=at2.select_atoms(f'resid {resid}')
+            
+            vecmatrix=get_vectormatrix(u,at1res,at2res,pbc=True)
+            nvec1, nvec2 = vecmatrix.shape[:2:]
+            
+            
+            k=1
+            contrainer= [] 
+            for i in np.arange(0,nvec1):
+                for j in np.arange(k,nvec2):
+                    _, normarray = norm_vecarray(vecmatrix[i,j])
+                    rezi_vec=np.reciprocal(normarray)**6
+                    mean_vec=np.mean(rezi_vec) # time average
+                    contrainer.append(mean_vec)
+                k+=1
+            doca.append(np.mean(contrainer))
+            doca_length=np.power(doca,-1/6)
+            
+        if outfilename is not None:
+            f=open(f"{nuc1}{nuc2}_{resname}.dat","w")
+            print("#r/A", file=f)
+            print(f"{np.mean(doca_length):.10G}",file=f)
+            f.close()
+        
+    return np.mean(doca_length)
+
+
