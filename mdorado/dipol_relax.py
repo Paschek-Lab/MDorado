@@ -1,7 +1,7 @@
 import numpy as np
 from mdorado.vectors import norm_vecarray, get_vecarray, get_vectormatrix
 from mdorado.correlations import correlate
-
+from numpy import linalg as LA
 
 
 
@@ -290,27 +290,34 @@ def intra_dist(u, comb_list, resname, residues=10,outfilename=None):
             at2res=at2.select_atoms(f'resid {resid}')
             
             vecmatrix=get_vectormatrix(u,at1res,at2res,pbc=True)
-            nvec1, nvec2 = vecmatrix.shape[:2:]
             
+            #normalize vector matrix
+            norm_vecmat=LA.norm(vecmatrix, axis=3)
+            #build time average
+            avg=np.mean(norm_vecmat, axis=2, where=(norm_vecmat!=0))
+            #build reciprocal and 6th power
+            rezi_r=np.reciprocal(avg,where=(avg != np.nan)) 
+            rezi_r6=np.power(rezi_r,6,where=(rezi_r != np.nan))
             
-            k=1
-            contrainer= [] 
-            for i in np.arange(0,nvec1):
-                for j in np.arange(k,nvec2):
-                    _, normarray = norm_vecarray(vecmatrix[i,j])
-                    rezi_vec=np.reciprocal(normarray)**6
-                    mean_vec=np.mean(rezi_vec) # time average
-                    contrainer.append(mean_vec)
-                k+=1
-            doca.append(np.mean(contrainer))
-            doca_length=np.power(doca,-1/6)
-            
+            #avearage over all residues 
+            #consider matrix symmetry for equal nuclei
+            if nuc1==nuc2:
+                rezi_r6=np.nanmean( rezi_r6 )/2
+            else:
+                rezi_r6=np.nanmean( rezi_r6 )
+                
+            doca.append(rezi_r6)
+
+        doca_length=np.power(np.mean(doca),-1/6)  
+        
+        
+        
         if outfilename is not None:
             f=open(f"{nuc1}{nuc2}_{resname}.dat","w")
             print("#r/A", file=f)
-            print(f"{np.mean(doca_length):.10G}",file=f)
+            print(f"{doca_length:.10G}",file=f)
             f.close()
         
-    return np.mean(doca_length)
+    return doca_length
 
 
