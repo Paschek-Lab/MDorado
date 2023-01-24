@@ -37,6 +37,10 @@ class Gofr:
             directly used by numpy.histogram (see there for more info).
             The default is 100.
 
+        skip: int, optional
+            Number of trajectory frames, which will be skipped between each
+            frame.The default is 1.
+        
         mode: str, optional
             Mode for calculating g(r). Options are "site-site",
             "cms-cms", and "site-cms". If mode is set to "site-site",
@@ -96,7 +100,7 @@ class Gofr:
                 (centers-of-mass) in bgrp.
     """
 
-    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site",  
+    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, skip=1, mode="site-site",  
                  count_only=None, outfilename="gofr.dat"):
         #checking user input
         try:
@@ -122,6 +126,7 @@ class Gofr:
         self.u = universe
         self.agrp = agrp
         self.bgrp = bgrp
+        self.skip = skip
         if count_only == 'inter':
             self.count_only=operator.ne
         elif count_only == 'intra':    
@@ -158,7 +163,7 @@ class Gofr:
         self.na = int(self.agrp.__len__())
         self.nb = int(self.bgrp.__len__())
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
@@ -185,7 +190,7 @@ class Gofr:
         self.na = len(self.agrp.atoms.residues)
         self.nb = len(self.bgrp.atoms.residues)
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
@@ -207,7 +212,7 @@ class Gofr:
         #nb is number of residues in bgrp
         self.nb = len(self.bgrp.atoms.residues)
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume (cuboid boxes)
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
