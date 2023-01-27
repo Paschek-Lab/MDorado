@@ -41,6 +41,7 @@ def do_bnp(hpoparray, tarray, diffusion_coeff, boxlen):
     ct_lc = hpoparray/hpoparray[0]
     ct_bnp = np.zeros(length)
     ct_bnp[0] = 1
+    inc_limit = 1e-10
 
     u = tarray * (diffusion_coeff/boxlen**2)
     for count, value in enumerate(u[1:]):
