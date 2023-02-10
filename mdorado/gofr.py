@@ -138,7 +138,7 @@ class Gofr:
         self.rmin = float(rmin)
         self.bins = bins
         self.filename = str(outfilename)
-        self.ulen = len(self.u.trajectory)
+        self.ulen = len(self.u.trajectory[::self.skip])
         #initializing histogram and edges
         self.hist, self.edges = np.histogram([], bins=self.bins, range=[self.rmin, self.rmax],
                                              density=False)
