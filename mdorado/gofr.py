@@ -127,6 +127,7 @@ class Gofr:
         self.agrp = agrp
         self.bgrp = bgrp
         self.skip = skip
+        
         if count_only == 'inter':
             self.count_only=operator.ne
         elif count_only == 'intra':    
@@ -145,6 +146,7 @@ class Gofr:
         self.hist = np.array(self.hist, dtype=np.float64)
         self.rdat = np.zeros(len(self.hist), dtype=np.float64)
         self.avvol = 0
+        
         #query mode and call class methods accordingly
         if mode == "site-site":
             self._gofr()
@@ -155,7 +157,11 @@ class Gofr:
         else:
             raise ValueError("Gofr: mode has to be one of the following: site-site, cms-cms,\
                               site-cms")
-        self._gatherdat()
+        
+        if count_only == 'intra':
+            self._gatherdat_intra()
+        else:
+            self._gatherdat()
     
     #site-site radial distribution function
     def _gofr(self):
@@ -182,7 +188,11 @@ class Gofr:
             #normalization follows later
             ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
                                     density=False)
-            self.hist += ihist*vol
+            
+            if self.count_only is not None:
+                self.hist += ihist
+            else:
+                self.hist += ihist*vol
 
     #cms-cms radial distribution function
     def _gofr_cms(self):
@@ -247,3 +257,15 @@ class Gofr:
         #-4, decimal format otherwise.
         np.savetxt(self.filename, np.array([self.rdat, self.hist, self.annn, self.bnnn]).T,
                    fmt='%.10G')
+        
+        
+    # intra-molecular counting
+    def _gatherdat_intra(self):
+        self.hist[0] = 0.0   # remove the first bin
+        self.hist = self.hist / (self.ulen *self.na)
+        self.bnnn = np.cumsum(self.hist)
+        self.annn = np.cumsum(self.hist)
+        self.rdat=self.edges[:-1]
+        np.savetxt(self.filename, np.array([self.rdat, self.hist,self.annn, self.bnnn]).T,
+                   fmt='%.10G')
+
