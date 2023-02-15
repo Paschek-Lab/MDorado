@@ -5,7 +5,7 @@ from numpy import linalg as LA
 
 
 
-def build_combination(grp1,grp2, exclude_selfinteraction=False):
+def build_combination(grp1,grp2, exclude_selfinteraction=False, exclude_reverse=False,return_dict=True):
     """
     mdorado.dipol_relax.build_combination(list1, list2, exclude_reverse=True, exclude_si=True)
 
@@ -36,11 +36,11 @@ def build_combination(grp1,grp2, exclude_selfinteraction=False):
     
     # construct if conditional  
     if exclude_selfinteraction:
-        cond += "nucleus1 != nucleus2 "   
+        cond += "nucleus1 != nucleus2 " 
+    if exclude_reverse:
+        cond += " and check not in comb"  
     if len(cond) == 0:
         cond += "True"
-
-    # print(f'Combination will be evaluated by: \n',cond)
     
     for nucleus1 in grp1:
         comb_dict[nucleus1]=[]
@@ -51,7 +51,10 @@ def build_combination(grp1,grp2, exclude_selfinteraction=False):
                 comb_dict[nucleus1].append([nucleus1,nucleus2])
                 
     print("# of Interactions:", len(comb) )
-    return comb_dict
+    if return_dict:
+        return comb_dict
+    else:
+        return comb
 
 
 
@@ -266,74 +269,3 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=Tru
     
     
 
-def intra_dist(u, comb, resname, residues=10,outfilename=None):
-    """
-    mdorado.dipol_relax.intra_dist(u, comb, resname, residues=10,outfilename=None):
-
-    Computes the intramolecular time averaged distance between two atomtypes.
-
-    Parameters
-    ----------
-        universe: MD.Analysis.Universe
-            The universe containing the trajectory.
-
-        comb: list of strings
-            holds the atomtype combination 
-        
-        resname: str    
-            holds the name of the residue
-            
-        residues: int, optional
-            number of residues over which the distance is averaged.
-        
-        outfilename: str, optional
-            If specified an xy-file with the name str(outfilename)
-            containing the timestep and corresponding value of the
-            correlation function. If None (default), no file will be
-            written.
-
-    Returns
-    -------
-        dist: float
-            Returns the time and residue averaged distance between the two atomtypes.
-    """
-    
-    nuc1=comb[0]
-    nuc2=comb[1]
-    
-    at1=u.select_atoms(f"name {nuc1}* and resname {resname}  and not name DRUD")
-    at2=u.select_atoms(f"name {nuc2}* and resname {resname}  and not name DRUD")
-    
-    con=[]
-    for resid in np.arange(1,residues+1,1):
-        at1res=at1.select_atoms(f'resid {resid}')
-        at2res=at2.select_atoms(f'resid {resid}')
-        
-        vecmatrix=get_vectormatrix(u,at1res,at2res,pbc=True)
-        
-        #normalize vector matrix
-        norm_vecmat=LA.norm(vecmatrix, axis=3)
-        #build time average
-        avg=np.mean(norm_vecmat, axis=2)
-        avg[avg==0]=np.nan
-        #build reciprocal and 6th power
-        rezi_r=np.reciprocal(avg,where=(avg != np.nan)) 
-        rezi_r6=np.power(rezi_r,6,where=(rezi_r != np.nan))
-        
-        #avearage over all residues 
-        #consider matrix symmetry for equal nuclei
-        if nuc1==nuc2:
-            rezi_r6_av=np.nanmean( rezi_r6)/2
-        else:
-            rezi_r6_av=np.nanmean( rezi_r6)                
-        con.append(rezi_r6_av)
-    dist=np.power(np.mean(con),-1/6)  
-    
-    
-    if outfilename is not None:
-        f=open(outfilename,"w")
-        print("#r/A", file=f)
-        print(f"{dist:.10G}",file=f)
-        f.close()
-
-    return dist
