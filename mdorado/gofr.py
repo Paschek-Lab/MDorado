@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.integrate import simps
 from MDAnalysis.analysis.distances import capped_distance
 import operator
 
@@ -184,7 +183,6 @@ class Gofr:
             #remove counts if it belongs to the reference group 
             if self.count_only is not None:
                 dab = dab[( self.count_only(self.agrp.resids[pairs[:,0]],  self.bgrp.resids[pairs[:,1]]) )]
-                print(dab)
                 
             #compute histogram from distances between sites, ihist represents numbers of entries
             #normalization follows later
@@ -267,8 +265,8 @@ class Gofr:
         self.rdat = self.edges[:-1] 
         dr= self.edges[1]-self.edges[0]
         self.hist = self.hist / (self.ulen *self.na *dr )
-        self.bnnn = simps(self.hist, self.rdat)
-        self.annn = simps(self.hist, self.rdat)
+        self.bnnn = np.cumsum(self.hist, self.rdat)*dr
+        self.annn = np.cumsum(self.hist, self.rdat)*dr
 
         np.savetxt(self.filename, np.array([self.rdat, self.hist,self.annn, self.bnnn]).T,
                    fmt='%.10G')
