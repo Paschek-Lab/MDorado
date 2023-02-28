@@ -7,7 +7,12 @@ from numpy import linalg as LA
 
 def build_combination(grp1,grp2, exclude_selfinteraction=False, exclude_reverse=False,return_dict=True):
     """
-    mdorado.dipol_relax.build_combination(list1, list2, exclude_reverse=True, exclude_si=True)
+    mdorado.dipol_relax.build_combination(  list1,
+                                            list2,
+                                            exclude_selfinteraction=False,
+                                            exclude_reverse=False,
+                                            return_dict=True
+                                            )
 
     Helper function which builds all possible combinations between the 
     entries in list1 and list2.
@@ -21,11 +26,20 @@ def build_combination(grp1,grp2, exclude_selfinteraction=False, exclude_reverse=
             Atomtypes of all atoms which could interact with this group.
 
         exclude_selfinteraction: bool, optional
-            Exclude occurences where both atomtypes are equal from dict entries.
+            Exclude occurences where both atomtypes are equal.
+            
+        exclude_reverse: bool, optional
+            Exclude occurences where the atomtypes are equal when reveresed.
+        
+        return_dict: bool, optional
+            Retruns either a dict or a list of all specified combinations. 
+
 
     Returns
     -------
-        comb_dict: dict 
+        comb_dict:  dict with combinations where the key is the first 
+                    supplied atomtype list 
+        comb: list with combination not grouped by atomtype 
         
         
     """
@@ -126,10 +140,15 @@ def dipol_correl(vecarray, dt, outfilename=False):
 
 def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
     """
-    mdorado.dipol_relax.calc_ddrelax_intra(u, dt, comb_dict, coeff_dict, outfilename=None)
+    mdorado.dipol_relax.calc_ddrelax_intra( u,
+                                            dt,
+                                            comb_dict,
+                                            coeff_dict,
+                                            outfilename=None
+                                            )
 
-    Computes the intramolecular dipolar relaxation correlation function for a given set of
-    combinations.  
+    Computes the intramolecular dipolar relaxation correlation function for a given set 
+    of combinations.  
 
     Parameters
     ----------
@@ -143,7 +162,7 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
             contains the combination between different atom sites.
             Can be build by mdorado.dipol_relax.build_combination.
         
-        coef_dict: dict
+        coeff_dict: dict
             contains the coefficient by which each correlation time 
             is multiplied if a reduction to subgroups is made.
         
@@ -155,7 +174,7 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
 
     Returns
     -------
-        timesteps, G2: ndarray, dict of ndarray
+        timesteps, g2: ndarray, dict of ndarray
             Returns information about the timestep t and a dictionary
             containing the dipolar relaxation functions for every 
             comb_dict key. 
@@ -177,17 +196,26 @@ def calc_ddrelax_intra(u,dt,comb_dict,coeff_dict,outfilename=None):
         g2[ref_at]=cum_sum
         
         if outfilename is not None:
-            np.savetxt(f"{outfilename}_{ref_at}_total.dat", np.array([timesteps, cum_sum]).T, fmt='%.10G')
+            np.savetxt(f"{outfilename}_{ref_at}_total.dat"
+                        , np.array([timesteps, cum_sum]).T, fmt='%.10G')
 
-    return timesteps,g2
-
-
-
+    return timesteps, g2
 
 
-def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=True,outfilename=None):
+
+
+
+def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False, major=True, outfilename=None):
     """
-    mdorado.dipol_relax.calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, reference_residues,sub=True,maj=True,outfilename=None)
+    mdorado.dipol_relax.calc_ddrelax_inter( u, 
+                                            dt,
+                                            comb_dict,
+                                            coeff_dict,
+                                            reference_residues,
+                                            minor=False,
+                                            major=True,
+                                            outfilename=None
+                                            )
 
     Computes the intermolecular dipolar relaxation correlation function for a given set of
     combinations for specified redids.  
@@ -204,20 +232,20 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=Tru
             contains the combination between different atom sites.
             Can be build by mdorado.dipol_relax.build_combination.
         
-        coef_dict: dict
+        coeff_dict: dict
             contains the coefficient by which each correlation time 
             is multiplied if a reduction to subgroups is made.
             
         ref_res: int
             Set supplied resid as reference resid. 
         
-        sub: bool, optional
-            Creats a file for each combination entry in comb_dict. Works only if 
-            a filname with the outfilename  option is provided.
+        minor: bool, optional
+            Creates a file for each value (atomtype combination) in comb_dict.
+            Works only if a filname with the outfilename option is provided.
             
-        maj: bool, optional
-            Creats a file for each key in comb_dict. Works only if 
-            a filname with the outfilename option is provided.
+        major: bool, optional
+            Creates a file for each key (reference atomtype) in comb_dict.
+            Works only if a filname with the outfilename option is provided.
         
         outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
@@ -227,7 +255,7 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=Tru
 
     Returns
     -------
-        timesteps, G2: ndarray, dict of ndarray
+        timesteps, g2: ndarray, dict of ndarray
             Returns information about the timestep t and a dictionary
             containing the dipolar relaxation functions for every 
             comb_dict key. 
@@ -264,7 +292,7 @@ def calc_ddrelax_inter(u,dt, comb_dict,coeff_dict, ref_res,minor=False,major=Tru
     if outfilename is not None and major:
         np.savetxt(f"{outfilename}_major.dat", np.array([timesteps, maj_cum_sum]).T, fmt='%.10G')
 
-    return timesteps,g2
+    return timesteps, g2
 
     
     
