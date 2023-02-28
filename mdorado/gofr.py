@@ -262,11 +262,12 @@ class Gofr:
     # intra-molecular counting
     def _gatherdat_intra(self):
         self.hist[0] = 0.0   # remove the first bin
-        self.rdat = self.edges[:-1] 
+        for i in np.arange(len(self.hist)):
+            self.rdat[i] = (self.edges[i] + self.edges[i+1]) * 0.5
         dr= self.edges[1]-self.edges[0]
         self.hist = self.hist / (self.ulen *self.na *dr )
-        self.bnnn = np.cumsum(self.hist, self.rdat)*dr
-        self.annn = np.cumsum(self.hist, self.rdat)*dr
+        self.bnnn = np.cumsum(self.hist)*dr
+        self.annn = np.cumsum(self.hist)*dr
 
         np.savetxt(self.filename, np.array([self.rdat, self.hist,self.annn, self.bnnn]).T,
                    fmt='%.10G')
