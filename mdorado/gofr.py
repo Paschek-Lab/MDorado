@@ -1,5 +1,6 @@
 import numpy as np
 from MDAnalysis.analysis.distances import capped_distance
+import operator
 
 class Gofr:
     """
@@ -36,6 +37,10 @@ class Gofr:
             directly used by numpy.histogram (see there for more info).
             The default is 100.
 
+        skip: int, optional
+            Number of trajectory frames, which will be skipped between each
+            frame.The default is 1.
+        
         mode: str, optional
             Mode for calculating g(r). Options are "site-site",
             "cms-cms", and "site-cms". If mode is set to "site-site",
@@ -51,6 +56,12 @@ class Gofr:
 
         outfilename: str, optional
             The name of the output file. The default is "gofr.dat".
+
+        count_only: str, optional
+            checks the return of capped_distance for same resid. (only for 'site-site' implemented)
+            
+            'inter' -> removes counts on reference residue (only intermolecular counts)
+            'intra' -> removes counts on other than reference resiude (only intramolecular counts)
 
     Output
     ------
@@ -89,8 +100,8 @@ class Gofr:
                 (centers-of-mass) in bgrp.
     """
 
-    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, mode="site-site",
-                 outfilename="gofr.dat"):
+    def __init__(self, universe, agrp, bgrp, rmax, rmin=0, bins=100, skip=1, mode="site-site",  
+                 count_only=None, outfilename="gofr.dat"):
         #checking user input
         try:
             universe.trajectory
@@ -115,17 +126,27 @@ class Gofr:
         self.u = universe
         self.agrp = agrp
         self.bgrp = bgrp
+        self.skip = skip
+        
+        if count_only == 'inter':
+            self.count_only=operator.ne
+        elif count_only == 'intra':    
+            self.count_only=operator.eq
+        else:
+            self.count_only=None
+        
         self.rmax = float(rmax)
         self.rmin = float(rmin)
         self.bins = bins
         self.filename = str(outfilename)
-        self.ulen = len(self.u.trajectory)
+        self.ulen = len(self.u.trajectory[::self.skip])
         #initializing histogram and edges
         self.hist, self.edges = np.histogram([], bins=self.bins, range=[self.rmin, self.rmax],
                                              density=False)
         self.hist = np.array(self.hist, dtype=np.float64)
         self.rdat = np.zeros(len(self.hist), dtype=np.float64)
         self.avvol = 0
+        
         #query mode and call class methods accordingly
         if mode == "site-site":
             self._gofr()
@@ -136,26 +157,42 @@ class Gofr:
         else:
             raise ValueError("Gofr: mode has to be one of the following: site-site, cms-cms,\
                               site-cms")
-        self._gatherdat()
-
+        
+        if count_only == 'intra':
+            self._gatherdat_intra()
+        else:
+            self._gatherdat()
+    
     #site-site radial distribution function
     def _gofr(self):
         #na and nb are number of sites in agrp and bgrp
         self.na = int(self.agrp.__len__())
         self.nb = int(self.bgrp.__len__())
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
             self.avvol += vol
+    
             #capped_distance seems to be faster without rmin
-            _, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
+            pairs, dab = capped_distance(self.agrp.positions, self.bgrp.positions, self.rmax, box=dim)
+            
+            #TODO: implement directly the seperation of intra and intermolecular counts 
+            
+            #remove counts if it belongs to the reference group 
+            if self.count_only is not None:
+                dab = dab[( self.count_only(self.agrp.resids[pairs[:,0]],  self.bgrp.resids[pairs[:,1]]) )]
+                
             #compute histogram from distances between sites, ihist represents numbers of entries
             #normalization follows later
             ihist, _ = np.histogram(dab, bins=self.bins, range=[self.rmin, self.rmax],
                                     density=False)
-            self.hist += ihist*vol
+            
+            if self.count_only is not None:
+                self.hist += ihist
+            else:
+                self.hist += ihist*vol
 
     #cms-cms radial distribution function
     def _gofr_cms(self):
@@ -163,7 +200,7 @@ class Gofr:
         self.na = len(self.agrp.atoms.residues)
         self.nb = len(self.bgrp.atoms.residues)
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
@@ -185,7 +222,7 @@ class Gofr:
         #nb is number of residues in bgrp
         self.nb = len(self.bgrp.atoms.residues)
         #loop over all timesteps in universe
-        for t in self.u.trajectory[::]:
+        for t in self.u.trajectory[::self.skip]:
             #box dimensions for periodic boundary conditions and average box volume (cuboid boxes)
             dim = self.u.coord.dimensions
             vol = dim[0]*dim[1]*dim[2]
@@ -220,3 +257,18 @@ class Gofr:
         #-4, decimal format otherwise.
         np.savetxt(self.filename, np.array([self.rdat, self.hist, self.annn, self.bnnn]).T,
                    fmt='%.10G')
+        
+        
+    # intra-molecular counting
+    def _gatherdat_intra(self):
+        self.hist[0] = 0.0   # remove the first bin
+        for i in np.arange(len(self.hist)):
+            self.rdat[i] = (self.edges[i] + self.edges[i+1]) * 0.5
+        dr= self.edges[1]-self.edges[0]
+        self.hist = self.hist / (self.ulen *self.na *dr )
+        self.bnnn = np.cumsum(self.hist)*dr
+        self.annn = np.cumsum(self.hist)*dr
+
+        np.savetxt(self.filename, np.array([self.rdat, self.hist,self.annn, self.bnnn]).T,
+                   fmt='%.10G')
+

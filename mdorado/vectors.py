@@ -185,17 +185,16 @@ def get_vectormatrix(universe, agrp, bgrp, pbc=True):
 
     ulen = len(universe.trajectory)
     vecmatrix = np.zeros((ulen, len(agrp), len(bgrp), 3), dtype=np.float32)
-    step = 0
-    for ts in universe.trajectory:
+    
+    for frame, ts in enumerate(universe.trajectory):
         apos = agrp.positions
         bpos = bgrp.positions
         crossarray = vectormatrix(apos, bpos)
         if pbc:
             box = universe.coord.dimensions
-            vecmatrix[step] = pbc_vecarray(crossarray, box)
+            vecmatrix[frame] = pbc_vecarray(crossarray, box)
         else:
-            vecmatrix[step] = crossarray
-        step += 1
+            vecmatrix[frame] = crossarray
     vecmatrix = np.moveaxis(vecmatrix, 0, 2)
     return vecmatrix
 
@@ -234,20 +233,19 @@ def get_vecarray(universe, agrp, bgrp, pbc=True):
     """
 
     ulen = len(universe.trajectory)
-    vecarray = np.zeros((ulen, len(agrp), 3), dtype=np.float32)
-    step = 0
-    for ts in universe.trajectory:
+    vecarray = np.zeros((ulen, len(bgrp), 3), dtype=np.float32)
+
+    for frame,ts in enumerate(universe.trajectory):
         try:
             diffarray = bgrp.positions - agrp.positions
         except ValueError:
-            print("Error: agrp and bgrp have to contain the same number of atoms!")
+            print("Error: agrp and bgrp have to contain either the same number of atoms or at least agrp has one atom position!")
             raise
         if pbc:
             box = universe.coord.dimensions
-            vecarray[step] = pbc_vecarray(diffarray, box)
+            vecarray[frame] = pbc_vecarray(diffarray, box)
         else:
-            vecarray[step] = diffarray
-        step += 1
+            vecarray[frame] = diffarray
     vecarray = np.swapaxes(vecarray, 0, 1)
     return vecarray
 
@@ -296,9 +294,8 @@ def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
 
     ulen = len(universe.trajectory)
     normalvecarray = np.zeros((ulen, len(agrp), 3))
-    step = 0
     #get the 2 vectors and compute normal vector for every timestep
-    for ts in universe.trajectory:
+    for frame,ts in enumerate(universe.trajectory):
         try:
             vec1array = bgrp.positions - agrp.positions
             vec2array = cgrp.positions - agrp.positions
@@ -309,8 +306,7 @@ def get_normal_vecarray(universe, agrp, bgrp, cgrp, pbc=True):
             box = universe.coord.dimensions
             vec1array = pbc_vecarray(vec1array, box)
             vec2array = pbc_vecarray(vec2array, box)
-        normalvecarray[step] = np.cross(vec1array, vec2array)
-        step += 1
+        normalvecarray[frame] = np.cross(vec1array, vec2array)
     #reorder array for easier correlation
     normalvecarray = np.swapaxes(normalvecarray, 0, 1)
     return normalvecarray
