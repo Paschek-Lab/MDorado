@@ -20,27 +20,37 @@ def do_bnp(hpoparray, tarray, diffusion_coeff, boxlen):
     ----------
         hpoparray: ndarray
             Array containing the hydrogen-bond population
-            correlation function.
+            correlation function <h(0)*h(t)>.
 
         tarray: ndarray
-            Array containing all timesteps for hpoparray.
+            Array containing all timesteps for hpoparray.             
+            The unit of the timestep must be chosen in such way,
+            that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
+            where u is a dimensionless quantity.
 
         diffusion_coeff: float
-            The inter-diffusion coefficient in [unit]???
+            Donor-Acceptor inter-diffusion coefficient D.
+            The unit of the diffusion coefficient must be chosen in such way,
+            that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
+            where u is a dimensionless quantity.
 
         boxlen: float
-            One length of the cubic simulation box in A.
+            One length of the cubic simulation box.
+            The unit of the box length must be chosen in such way,
+            that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
+            where u is a dimensionless quantity.
 
     Returns
     -------
         ct_bnp: ndarray
-            The corrected hydrogen-bond population correlation
+            The BNP-corrected hydrogen-bond population correlation
             function.
     """
     length = len(tarray)
     ct_lc = hpoparray/hpoparray[0]
     ct_bnp = np.zeros(length)
     ct_bnp[0] = 1
+    inc_limit = 1e-10
 
     u = tarray * (diffusion_coeff/boxlen**2)
     for count, value in enumerate(u[1:]):
