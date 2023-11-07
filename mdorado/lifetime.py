@@ -28,17 +28,19 @@ def do_bnp(hpoparray, tarray, diffusion_coeff, boxlen):
             that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
             where u is a dimensionless quantity.
 
-        diffusion_coeff: float
+        diffusion_coeff: float or ndarray
             Donor-Acceptor inter-diffusion coefficient D.
             The unit of the diffusion coefficient must be chosen in such way,
             that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
             where u is a dimensionless quantity.
-
-        boxlen: float
+            the diffusion coefficient is a float for cubic boxes
+            or the diffusion coefficient in each direction for non-cubic boxes.
+        boxlen: float or ndarray
             One length of the cubic simulation box.
             The unit of the box length must be chosen in such way,
             that the equation diffusion_coeff*timestep/boxlen**2 = u is fulfilled, 
             where u is a dimensionless quantity.
+            the box length is a float for cubic boxes or the box length in each direction for non-cubic boxes.
 
     Returns
     -------
@@ -46,25 +48,41 @@ def do_bnp(hpoparray, tarray, diffusion_coeff, boxlen):
             The BNP-corrected hydrogen-bond population correlation
             function.
     """
-    length = len(tarray)
+    if isinstance(diffusion_coeff, list) and isinstance(boxlen, list):
+        diffusion_coeff = np.array(diffusion_coeff)
+        boxlen = np.array(boxlen)
+        
+    if isinstance(diffusion_coeff, float) and isinstance(boxlen, float):
+        dimension = 1
+    else:
+        if diffusion_coeff.shape[0] != boxlen.shape[0]:
+            raise AttributeError('diffusion_coeff and boxlen must have the same number of dimensions')
+        dimension = diffusion_coeff.shape[0]
+
     ct_lc = hpoparray/hpoparray[0]
-    ct_bnp = np.zeros(length)
+    ct_bnp = np.zeros(len(tarray))
     ct_bnp[0] = 1
     inc_limit = 1e-10
 
+    # expand the time scale to a matrix with the same dimensions as diffusion_coeff and boxlen
+    tarray = np.array([tarray]*dimension).T 
+
     u = tarray * (diffusion_coeff/boxlen**2)
-    for count, value in enumerate(u[1:]):
-        inc = 1
-        nn = 1
-        sum = 0
-        nlist = []
-        while inc > inc_limit:
-            inc = np.exp(-nn*nn/(4.0*value))
-            sum += inc
-            nn += 1
-        nlist.append(nn)
-        q = (1+2*sum)**3
-        corr = (q-1)/((4*np.pi*value)**(3/2))
+    for count, value in enumerate(u[1:,:]):
+        allinc = np.ones(dimension)
+        nn = np.ones(dimension)
+        sum = np.zeros(dimension)
+        for idinc, inc in enumerate(allinc):
+            while inc > inc_limit:
+                inc = np.exp(-nn[idinc]**2/(4.0*value[idinc]))
+                sum[idinc] += inc
+                nn[idinc] += 1
+        if dimension == 3:
+            q = (1+2*sum[0])*(1+2*sum[1])*(1+2*sum[2])
+            corr = (q-1)/(8*np.pi**(3/2)*(value[0]*value[1]*value[2])**(1/2))
+        if dimension == 1:
+            q = (1+2*sum[0])**3
+            corr = (q-1)/((4*np.pi*value[0])**(3/2))
         ct_bnp[count+1] = ct_lc[count+1] - hpoparray[0]*corr
     return ct_bnp
 
