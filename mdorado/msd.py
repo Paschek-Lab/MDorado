@@ -116,7 +116,7 @@ def unwrap(universe, agrp, dimensionskey="xyz", cms=False):
     positions = np.moveaxis(positions, 0, -1)
     return positions
 
-def msd(positions, dt, outfilename=False):
+def msd(positions, dt, xyz=False, outfilename=False):
     """
     mdorado.msd.msd(positions, dt, outfilename="msd.dat")
 
@@ -138,6 +138,10 @@ def msd(positions, dt, outfilename=False):
         dt: int or float
             Difference in time between two configurations in the
             positions option.
+        
+        xyz: bool, optional
+            If set to True, the function returns the MSD(t) for every dimension separately,
+            averaged over all particles. The default value is False.
 
         outfilename: str, optional
             If specified an xy-file with the name str(outfilename)
@@ -154,7 +158,7 @@ def msd(positions, dt, outfilename=False):
     #initialize atom number, number of dimensons and trajectory length
     na, ndim, ulen = positions.shape
     #initialize empty array to collect average MSD and factor for normalization
-    msd_result = np.zeros(ulen)
+    msd_result = np.zeros((ulen, ndim))
     factor = 1.0 / np.flip(np.arange(1, ulen+1))
     #compute MSD for every particle and dimension seperately
     for mol in positions:
@@ -163,11 +167,14 @@ def msd(positions, dt, outfilename=False):
             xsq = np.square(mol[x])
             s0 = 2 * np.sum(xsq)
             sm = s0 - np.cumsum(xsq)[:-1] - np.cumsum(xsq[1:][::-1])
-            msd_result[0] += s0*factor[0] - twocorrel[0]
-            msd_result[1:] += sm*factor[1:] - twocorrel[1:]
+            msd_result[0,x] += s0*factor[0] - twocorrel[0]
+            msd_result[1:,x] += sm*factor[1:] - twocorrel[1:]
+    # average over all dimensions, if xyz=False
+    if xyz == False:
+        msd_result = np.sum(msd_result, axis=1)
     #normalize MSD to number of particles
     msd_result /= na
     timesteps = np.arange(ulen)*dt
     if outfilename:
-        np.savetxt(str(outfilename), np.array([timesteps, msd_result]).T, fmt='%.10G')
+        np.savetxt(str(outfilename), np.vstack((timesteps, msd_result.T)).T, fmt='%.10G')
     return timesteps, msd_result
